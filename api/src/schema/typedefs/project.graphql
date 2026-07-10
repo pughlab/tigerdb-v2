@@ -1,0 +1,103 @@
+type Project @node {
+  id: ID! @id @alias(property: "projectID")
+  name: String!
+  description: String!
+  datasets: [Dataset!]! @relationship(type: "HAS_DATASET", direction: OUT)
+  createdBy: KeycloakUser @relationship(type: "CREATED_BY", direction: OUT)
+  createdOn: DateTime! @timestamp(operations: [CREATE])
+  sharedWith: [KeycloakUser!]! @relationship(type: "SHARED_WITH", direction: OUT)
+  public: Boolean! @alias(property: "isPublic")
+  reference: Boolean @alias(property: "isReference")
+}
+
+type UnlabelledVariables {
+  name: String
+  count: Int
+}
+
+input CreateProjectInput {
+  name: String!
+  description: String!
+  reference: Boolean
+}
+
+input UpdateProjectInput {
+  id: ID!
+  name: String
+  description: String
+  reference: Boolean
+}
+
+input DeleteProjectInput {
+  id: ID!
+}
+
+input ProjectAddDatasetInput {
+  id: ID!
+  datasetIds: [String!]!
+}
+
+input ProjectShareInput {
+  id: ID!
+  emails: [Email!]!
+}
+
+input ProjectStopSharingInput {
+  id: ID!
+  email: Email!
+}
+
+type Query{
+  projects: [Project!]! @cypher(statement: """
+    MATCH (p:Project)
+    WITH p
+    WHERE $jwt IS NULL AND p.isPublic = true
+    OR ($jwt IS NOT NULL AND (
+      p.isPublic = true
+      OR EXISTS { MATCH (p)-[:CREATED_BY]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR EXISTS { MATCH (p)-[:SHARED_WITH]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR 'admin' IN $jwt.roles
+      OR 'curator' IN $jwt.roles
+    ))
+    RETURN p
+    ORDER BY p.createdOn DESC
+  """, columnName: "p"),
+  project(id: ID!): Project @cypher(statement: """
+    MATCH (p:Project {projectID: $id})
+    WITH p
+    WHERE $jwt IS NULL AND p.isPublic = true
+    OR ($jwt IS NOT NULL AND (
+      p.isPublic = true
+      OR EXISTS { MATCH (p)-[:CREATED_BY]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR EXISTS { MATCH (p)-[:SHARED_WITH]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR 'admin' IN $jwt.roles
+      OR 'curator' IN $jwt.roles
+    ))
+    RETURN p
+  """, columnName: "p"),
+  unlabelledVariables: [UnlabelledVariables],
+  isProjectOwner (id: ID!): Boolean @authentication @cypher(statement: """
+    MATCH (p:Project {projectID: $id})-[:CREATED_BY]->(u:KeycloakUser)
+    WHERE u.keycloakUserID = $jwt.sub
+    RETURN COUNT(u) > 0 AS isOwner
+  """, columnName: "isOwner"),
+}
+
+type Mutation {
+  createProject(input: CreateProjectInput!): Project! @authentication,
+  updateProject(input: UpdateProjectInput!): Project! @authentication,
+  deleteProject(input: DeleteProjectInput!): Boolean! @authentication,
+  addDatasetsToProject(input: ProjectAddDatasetInput!): Project! @authentication,
+  makeProjectPublic(id: ID!): Project! @authentication @cypher(statement: """
+    MATCH (p:Project {projectID: $id})
+    SET p.isPublic = true
+    RETURN p
+  """, columnName: "p"),
+  makeProjectPrivate(id: ID!): Project! @authentication @cypher(statement: """
+    MATCH (p:Project {projectID: $id})
+    SET p.isPublic = false
+    RETURN p
+  """, columnName: "p"),
+  shareWithUsers(input: ProjectShareInput!): Project! @authentication,
+  stopSharingWithUser(input: ProjectStopSharingInput!): Project! @authentication,
+}

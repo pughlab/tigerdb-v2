@@ -1,0 +1,64 @@
+# Type used for keeping track of what MinioObjects exist
+type MinioUpload @node {
+  bucketName: ID!
+  objectName: ID! @id
+  filename: String!
+  presignedURL: String @customResolver
+  dataset: Dataset @relationship(type: "HAS_FILE", direction: IN)
+  processedDataset: ProcessedDataset @relationship(type: "HAS_PROCESSED_FILE", direction: OUT)
+}
+
+input MinioUploadInput {
+  bucketName: ID!
+  objectName: ID!
+  filename: String!
+}
+
+input UploadFileInput {
+  bucketName: String!
+  file: Upload!
+  datasetId: ID!
+}
+
+input DeleteFileInput {
+  bucketName: String!
+  objectName: String!
+}
+
+type Header @node {
+  name: String!
+  index: Int!
+  processedDataset: ProcessedDataset @relationship(type: "HAS_HEADER", direction: IN) 
+}
+
+input ProcessedHeaderInput {
+  bucketName: String!,
+  objectName: String!,
+  filename: String!,
+  headers: [HeaderInput!]!,
+  selectedDelimiter: String!,
+  includesHeader: Boolean!,
+}
+
+input HeaderInput {
+  name: String!
+  index: Int!
+}
+
+type ProcessedDataset @node {
+  bucketName: ID!
+  objectName: ID! 
+  filename: String!
+  headers: [Header!]! @relationship(type: "HAS_HEADER", direction: OUT)
+  rows: Int!
+  createdAt: DateTime!
+  presignedURL: String @customResolver
+  upload: MinioUpload @relationship(type: "HAS_PROCESSED_FILE", direction: IN)
+  delimiter: String!
+}
+
+extend type Mutation {
+  uploadFile(input: UploadFileInput!): MinioUpload!
+  deleteFile(input: DeleteFileInput!): Boolean
+  uploadProcessedHeaders(input: ProcessedHeaderInput!): MinioUpload
+}

@@ -1,0 +1,111 @@
+enum RunStatus {
+  pending
+  submitted
+  completed
+  failed
+}
+
+type Run @node {
+  id: ID! @id @alias(property: "runID")
+  workflowId: ID
+  name: String!
+  description: String
+  processedDatasets: [ProcessedDataset!]! @relationship(type: "HAS_RUN", direction: IN)
+  referenceDatasets: [MinioUpload!]! @relationship(type: "HAS_RUN", direction: IN)
+  referenceDatasetsCount: Int
+  createdOn: DateTime! @timestamp(operations: [CREATE])
+  submittedOn: String
+  completedOn: DateTime
+  status: RunStatus! @default(value: pending)   
+  createdBy: KeycloakUser @relationship(type: "CREATED_BY", direction: OUT)
+  sharedWith: [KeycloakUser!]! @relationship(type: "SHARED_WITH", direction: OUT)
+  tcrs: [TCR!]! @relationship(type: "HAS_RESULT", direction: OUT)
+  tcrCount: Int @customResolver
+  public: Boolean
+  getRunData: String
+  failedRunLogs: String
+  presignedURL: String @customResolver
+  outPrefix: String
+  localMinpValue: Float
+  pDepth: Int
+  globalConvergenceCutoff: Int
+  simulationDepth: Int
+  kmerMinDepth: Int
+  localMinOVE: Int
+  allAAInterchangeable: Int
+}
+
+input CreateRunInput {
+  name: String!
+  description: String
+  processedDatasetNames: [String!]!
+  referenceDatasetNames: [String!]!
+}
+
+input ShareRunInput {
+  runId: ID!
+  emails: [Email!]!
+}
+
+input StopSharingRunInput {
+  runId: ID!
+  email: Email!
+}
+
+input UpdateRunParametersInput {
+  runId: ID!
+  outPrefix: String
+  localMinpValue: Float
+  pDepth: Int
+  globalConvergenceCutoff: Int
+  simulationDepth: Int
+  kmerMinDepth: Int
+  localMinOVE: Int
+  allAAInterchangeable: Int
+}
+
+input SubmitRunInput {
+  runId: ID!
+}
+
+extend type Query{
+  runs: [Run!]! @cypher(statement: """
+    MATCH (r:Run)
+    WHERE $jwt IS NULL AND r.isPublic = true
+    OR ($jwt IS NOT NULL AND (
+      r.isPublic = true
+      OR EXISTS { MATCH (r)-[:CREATED_BY]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR EXISTS { MATCH (r)-[:SHARED_WITH]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR 'admin' IN $jwt.roles
+      OR 'curator' IN $jwt.roles
+    ))
+    RETURN r
+    ORDER BY r.createdOn DESC
+  """, columnName: "r")
+  run(id: ID!): Run @cypher(statement: """
+    MATCH (r:Run {runID: $id})
+    WHERE $jwt IS NULL AND r.isPublic = true
+    OR ($jwt IS NOT NULL AND (
+      r.isPublic = true
+      OR EXISTS { MATCH (r)-[:CREATED_BY]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR EXISTS { MATCH (r)-[:SHARED_WITH]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+      OR 'admin' IN $jwt.roles
+      OR 'curator' IN $jwt.roles
+    ))
+    RETURN r
+  """, columnName: "r"),
+  isRunOwner (id: ID!): Boolean @authentication @cypher(statement: """
+    MATCH (r:Run {runID: $id})-[:CREATED_BY]->(u:KeycloakUser)
+    WHERE u.keycloakUserID = $jwt.sub
+    RETURN COUNT(r) > 0 AS isOwner
+  """, columnName: "isOwner")
+}
+
+extend type Mutation {
+  createRun(input: CreateRunInput!): Run!
+  shareRun(input: ShareRunInput!): Run!
+  stopSharingRun(input: StopSharingRunInput!): Run!
+  submitRun(input: SubmitRunInput!): Run!
+  updateRunParameters(input: UpdateRunParametersInput!): Run!
+  deleteRun(runId: ID!): String!
+}

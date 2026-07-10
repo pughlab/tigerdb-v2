@@ -1,0 +1,8 @@
+body {
+    background-color: #ffffff !important;
+    background-image: url("./components/logos/memphis-mini.png") !important;
+}
+
+.underline-on-hover:hover {
+    text-decoration: underline;
+}

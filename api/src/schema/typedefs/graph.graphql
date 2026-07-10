@@ -1,0 +1,55 @@
+type TCR @node(labels: ["GliphTCR"]) {
+  id: ID! @id
+  cdr3b: String!
+  v_gene: String
+  j_gene: String
+  sample: String
+  source: String
+  # patterns: [Pattern!]! @relationship(type: "HAS_PATTERN", direction: OUT)
+}
+
+#type Pattern @node(labels: ["GliphPattern"]) {
+#  id: ID! @id
+#  pattern: String
+#  score: Float
+#  size: Int
+#  tcrs: [TCR!]! @relationship(type: "HAS_PATTERN", direction: IN)
+#  run: Run @relationship(type: "HAS_RESULT", direction: IN)
+#}
+
+type GraphNode {
+  id: ID!
+  group: String!
+  sample: String
+  value: String
+  pattern: String
+  source: String
+  score: Float
+  size: Int
+  color: String
+  v_gene: String
+  j_gene: String
+}
+
+type GraphLink {
+  source: ID!
+  target: ID!
+}
+
+type Graph {
+  nodes: [GraphNode!]!
+  links: [GraphLink!]!
+}
+
+input GraphInput {
+  runId: ID!
+  presignedURL: String!
+}
+
+extend type Query {
+  graph(runId: ID!): Graph
+}
+
+extend type Mutation {
+  importResults(input: GraphInput!): Boolean
+}

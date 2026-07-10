@@ -1,0 +1,137 @@
+type AnnotationVariable @node {
+    id: ID! @id
+    cdr3b: String
+    cdr3a: String
+    trbv: String
+    trbj: String
+    trav: String
+    traj: String
+    mhc: String
+    mhcClass: String
+    epitopeGene: String
+    epitopeAAseq: String
+    epitopeSpecies: String
+    mutation: String
+    recognizesWTEpitope: String
+    reference: String
+    uniProt: String
+    notes: String
+}
+
+type Filter {
+    key: String!
+    placeholder: String!
+    text: [String!]!
+}
+
+extend type Query {
+    curatedAnnotationFilters: [Filter!]!
+        @cypher(
+            statement: """
+            MATCH (n:AnnotationVariable)
+            WHERE n.trbv IS NOT NULL
+            RETURN {
+            key: 'trbv',
+            placeholder: 'TRBV',
+            text: collect(DISTINCT n.trbv)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.trbj IS NOT NULL
+            RETURN {
+            key: 'trbj',
+            placeholder: 'TRBJ',
+            text: collect(DISTINCT n.trbj)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.trav IS NOT NULL
+            RETURN {
+            key: 'trav',
+            placeholder: 'TRAV',
+            text: collect(DISTINCT n.trav)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.traj IS NOT NULL
+            RETURN {
+            key: 'traj',
+            placeholder: 'TRAJ',
+            text: collect(DISTINCT n.traj)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.mhc IS NOT NULL
+            RETURN {
+            key: 'mhc',
+            placeholder: 'MHC',
+            text: collect(DISTINCT n.mhc)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.mhcClass IS NOT NULL
+            RETURN {
+            key: 'mhcClass',
+            placeholder: 'MHC class',
+            text: collect(DISTINCT n.mhcClass)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.epitopeGene IS NOT NULL
+            RETURN {
+            key: 'epitopeGene',
+            placeholder: 'Epitope gene/protein name',
+            text: collect(DISTINCT n.epitopeGene)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.epitopeAAseq IS NOT NULL
+            RETURN {
+            key: 'epitopeAAseq',
+            placeholder: 'WT/Mutant epitope amino-acid sequence',
+            text: collect(DISTINCT n.epitopeAAseq)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.epitopeSpecies IS NOT NULL
+            RETURN {
+            key: 'epitopeSpecies',
+            placeholder: 'Epitope species',
+            text: collect(DISTINCT n.epitopeSpecies)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.mutation IS NOT NULL
+            RETURN {
+            key: 'mutation',
+            placeholder: 'Mutation',
+            text: collect(DISTINCT n.mutation)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.recognizesWTEpitope IS NOT NULL
+            RETURN {
+            key: 'recognizesWTEpitope',
+            placeholder: 'Recognizes WT epitope',
+            text: collect(DISTINCT n.recognizesWTEpitope)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.reference IS NOT NULL
+            RETURN {
+            key: 'reference',
+            placeholder: 'Reference',
+            text: collect(DISTINCT n.reference)
+            } AS filter
+            UNION
+            MATCH (n:AnnotationVariable)
+            WHERE n.uniProt IS NOT NULL
+            RETURN {
+            key: 'uniProt',
+            placeholder: 'UniProt',
+            text: collect(DISTINCT n.uniProt)
+            } AS filter
+            """,
+            columnName: "filter"
+        )
+}

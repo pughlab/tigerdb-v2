@@ -1,0 +1,10 @@
+packages:
+  - 'api'
+  - 'ui'
+  - 'nextflow-worker'
+allowBuilds:
+  '@apollo/protobufjs': true
+  esbuild: true
+overrides:
+  "ui>react": "^18.3.1"
+  "ui>react-dom": "^18.3.1"

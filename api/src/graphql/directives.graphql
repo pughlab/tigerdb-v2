@@ -1,0 +1,47 @@
+# Placeholder for directives that come from other libraries.
+# They are declared here to avoid errors when the schema is built, but they will be replaced
+# by the actual implementations from the respective libraries when the schema is built.
+enum _RelationshipDirections {
+    IN
+    OUT
+    UNDIRECTED
+}
+enum _Operations {
+    CREATE
+    UPDATE
+    DELETE
+}
+directive @node(label: String, labels: [String]) on OBJECT
+directive @cypher(statement: String!, columnName: String) on FIELD_DEFINITION
+directive @id on FIELD_DEFINITION
+directive @relationship(type: String!, direction: _RelationshipDirections!, properties: String) on FIELD_DEFINITION
+directive @timestamp(operations: [_Operations]) on FIELD_DEFINITION
+directive @customResolver on FIELD_DEFINITION
+directive @default(value: RunStatus!) on FIELD_DEFINITION
+directive @alias(property: String!) on FIELD_DEFINITION
+directive @authentication on OBJECT | FIELD_DEFINITION | INTERFACE
+directive @authorization(filter: [AuthFilterRule], validate: [AuthValidateRule]) on OBJECT | FIELD_DEFINITION | INTERFACE
+
+# Minimal supporting types for @authorization intellisense
+input AuthFilterRule {
+  where: AuthWhere
+}
+input AuthValidateRule {
+  where: AuthWhere
+  when: [AuthValidateWhen]
+}
+input AuthWhere {
+  jwt: JWTWhere
+  node: AuthNodeWhere
+}
+input JWTWhere {
+    sub: String
+    roles: [String]
+}
+input AuthNodeWhere {
+  id: ID
+}
+enum AuthValidateWhen {
+  BEFORE
+  AFTER
+}

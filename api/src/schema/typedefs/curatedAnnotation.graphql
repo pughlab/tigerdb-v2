@@ -1,0 +1,25 @@
+type CuratedAnnotation @node {
+    id: ID! @id @alias(property: "curatedAnnotationID")
+    variables: [AnnotationVariable!]! @relationship(type: "HAS_ANNOTATION_VARIABLE", direction: OUT)
+    dataset: Dataset @relationship(type: "HAS_CURATED_ANNOTATION", direction: IN)
+    minioUpload: MinioUpload @relationship(type: "GENERATED_CURATED_ANNOTATION", direction: IN)
+}
+
+type EpitopeSpeciesCount {
+    epitopeSpecies: String!
+    count: Int!
+}
+
+input CreateCuratedAnnotationInput {
+    datasetId: ID!
+    bucketName: ID!
+    objectName: ID!
+}
+
+extend type Mutation {
+    createCuratedAnnotation(input: CreateCuratedAnnotationInput!): CuratedAnnotation! @authentication
+}
+
+extend type Query {
+    epitopes: [EpitopeSpeciesCount]!
+}

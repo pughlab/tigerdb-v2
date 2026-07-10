@@ -1,0 +1,9 @@
+type DatasetVariable @node {
+    id: ID! @id
+    cdr3b: String!
+    trbv: String!
+    trbj: String
+    cdr3a: String
+    subjectCondition: String
+    count: Int
+}

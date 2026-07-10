@@ -1,0 +1,19 @@
+type KeycloakUser @node @authentication {
+  id: ID! @alias(property: "keycloakUserID")
+  name: String!
+  email: Email!
+}
+
+input KeycloakUserInput {
+  id: ID!
+}
+
+extend type Query {
+  isAdmin: Boolean @authentication
+  isCurator: Boolean @authentication
+  userExists(email: Email!): Boolean @authentication
+}
+
+extend type Mutation {
+  me: KeycloakUser @authentication
+}

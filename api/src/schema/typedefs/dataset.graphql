@@ -1,0 +1,54 @@
+type Dataset @node {
+  id: ID! @id @alias(property: "datasetID")
+  name: String! 
+  bucketName: String!
+  uploads: [MinioUpload!]! @relationship(type: "HAS_FILE", direction: OUT)
+  createdOn: DateTime! @timestamp(operations: [CREATE])
+  tags: [Tag!]! @relationship(type: "HAS_TAG", direction: OUT)
+  project: Project @relationship(type: "HAS_DATASET", direction: IN)
+  curated: Boolean! @customResolver
+  annotated: Boolean! @customResolver
+}
+
+input CreateDatasetInput {
+  projectId: ID!
+  name: String
+}
+
+input UpdateDatasetInput {
+  datasetId: ID!
+  name: String
+}
+
+extend type Query {
+  datasets: [Dataset!]! @cypher(statement: """
+    MATCH (d:Dataset)
+    WHERE $jwt IS NULL AND EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project) WHERE p.isPublic = true }
+    OR ($jwt IS NOT NULL AND (
+    EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project) WHERE p.isPublic = true }
+    OR EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project)-[:CREATED_BY]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+    OR EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project)-[:SHARED_WITH]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+    OR 'admin' IN $jwt.roles
+    OR 'curator' IN $jwt.roles
+    ))
+    RETURN d
+    ORDER BY d.createdOn DESC
+  """, columnName: "d"),
+  dataset(id: ID!): Dataset @cypher(statement: """
+    MATCH (d:Dataset {datasetID: $id})
+    WHERE $jwt IS NULL AND EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project) WHERE p.isPublic = true }
+    OR ($jwt IS NOT NULL AND (
+    EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project) WHERE p.isPublic = true }
+    OR EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project)-[:CREATED_BY]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+    OR EXISTS { MATCH (d)<-[:HAS_DATASET]-(p:Project)-[:SHARED_WITH]->(u:KeycloakUser) WHERE u.keycloakUserID = $jwt.sub }
+    OR 'admin' IN $jwt.roles
+    OR 'curator' IN $jwt.roles
+    ))
+    RETURN d
+  """, columnName: "d"),
+}
+
+extend type Mutation {
+  createDataset(input: CreateDatasetInput!): Dataset!,
+  updateDataset(input: UpdateDatasetInput!): Dataset!,
+}

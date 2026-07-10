@@ -1,0 +1,42 @@
+type Tag @node {
+  name: String!
+  category: String
+  datasets: [Dataset!]! @relationship(type: "HAS_TAG", direction: IN)
+}
+
+input CreateTagInput {
+  name: String!
+  category: String!
+}
+
+input AddTagToDatasetInput {
+  datasetId: ID!
+  name: String!
+}
+
+input RemoveTagFromDatasetInput {
+  datasetId: ID!
+  name: String!
+}
+
+extend type Query {
+  tagCategories: [String] @cypher(
+    statement: "MATCH (t:Tag) RETURN collect(DISTINCT t.category) AS categories",
+    columnName: "categories"
+  )
+  tagNames: [String] @cypher(
+    statement: "MATCH (t:Tag) RETURN collect(DISTINCT t.name) AS names",
+    columnName: "names"
+  )
+  availableTags(datasetID: ID!): [Tag!]!  @cypher(
+    statement: "MATCH (t:Tag) WHERE NOT (t)<-[:HAS_TAG]-(:Dataset {datasetID: $datasetID}) RETURN t",
+    columnName: "t"
+  )
+}
+
+extend type Mutation {
+  findOrCreateTag(input: CreateTagInput!): Tag
+  addTagToDataset(input: AddTagToDatasetInput!): Tag
+  removeTagFromDataset(input: RemoveTagFromDatasetInput!): Tag
+  deleteTag(name: String!): String
+}

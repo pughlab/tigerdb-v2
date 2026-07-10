@@ -1,0 +1,17 @@
+type CuratedDataset @node {
+    id: ID! @id @alias(property: "curatedDatasetID")
+    variables: [DatasetVariable!]! @relationship(type: "HAS_DATASET_VARIABLE", direction: OUT)
+    dataset: Dataset @relationship(type: "HAS_CURATED_DATASET", direction: IN)
+    processedDataset: ProcessedDataset @relationship(type: "GENERATED_CURATED_DATASET", direction: IN)
+}
+
+input CreateCuratedDatasetInput {
+    datasetId: ID!
+    bucketName: ID!
+    objectName: ID!
+    delimiter: String!
+}
+
+extend type Mutation {
+    createCuratedDataset(input: CreateCuratedDatasetInput!): CuratedDataset!
+}
