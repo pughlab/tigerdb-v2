@@ -5,30 +5,52 @@ type TCR @node(labels: ["GliphTCR"]) {
   j_gene: String
   sample: String
   source: String
-  # patterns: [Pattern!]! @relationship(type: "HAS_PATTERN", direction: OUT)
 }
-
-#type Pattern @node(labels: ["GliphPattern"]) {
-#  id: ID! @id
-#  pattern: String
-#  score: Float
-#  size: Int
-#  tcrs: [TCR!]! @relationship(type: "HAS_PATTERN", direction: IN)
-#  run: Run @relationship(type: "HAS_RESULT", direction: IN)
-#}
 
 type GraphNode {
   id: ID!
   group: String!
-  sample: String
   value: String
-  pattern: String
-  source: String
-  score: Float
-  size: Int
-  color: String
+  label: String
   v_gene: String
   j_gene: String
+  size: Int
+  color: String
+  source: String
+  hla_a: String
+  hla_b: String
+  hla_c: String
+  hla_dpa1: String
+  hla_dpb1: String
+  hla_dqa1: String
+  hla_dqb1: String
+  hla_drb1: String
+  hla_drb3: String
+  hla_drb4: String
+  hla_drb5: String
+}
+
+type NodeDetails {
+  cdr3b: String!
+  v_gene: String
+  j_gene: String
+  source: String
+  projectID: String
+  projectName: String
+  datasetID: String
+  datasetName: String
+  variableID: String
+  trav: String
+  traj: String
+  mhc: String
+  mhcClass: String
+  epitopeGene: String
+  epitopeAAseq: String
+  epitopeSpecies: String
+  mutation: String
+  recognizesWTEpitope: String
+  uniProt: String
+  reference: String
 }
 
 type GraphLink {
@@ -41,13 +63,20 @@ type Graph {
   links: [GraphLink!]!
 }
 
+input GraphOptions {
+  minCommunitySize: Int
+  cdr3bContains: String
+  maxNodes: Int
+}
+
 input GraphInput {
   runId: ID!
   presignedURL: String!
 }
 
 extend type Query {
-  graph(runId: ID!): Graph
+  graph(runId: ID!, options: GraphOptions): Graph
+  node(cdr3b: String!): NodeDetails
 }
 
 extend type Mutation {

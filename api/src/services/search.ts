@@ -95,7 +95,7 @@ export async function searchForCDRs(args: { input: CDR3SearchInput, skip: number
 
     const tagConditions = buildTagConditions(tags || [], categories || []);
     const tagFilter = (tags?.length || categories?.length)
-        ? `MATCH (d)-[]->(tags:Tag) ${tagConditions}`
+        ? `MATCH (d)-[]->(t:Tag) ${tagConditions}`
         : '';
     const builtFilters = buildFilters(filters || {});
 

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { AppAuth } from "../index.ts";
 import { runQuery } from "../neo4j.ts";
+import { uploadFileToMinio } from "./minio.ts";
 
 const defaultParameters = {
   outPrefix: "TIGERdb",
@@ -21,6 +22,32 @@ function mapRunNode(node: any) {
     id: props.runID,
     public: props.isPublic,
   };
+}
+
+function getCleanParameters(run: any) {
+  const {
+    outPrefix,
+    hlaFile,
+    localMinpValue,
+    pDepth,
+    globalConvergenceCutoff,
+    simulationDepth,
+    kmerMinDepth,
+    localMinOVE,
+    allAAInterchangeable,
+  } = run;
+  const runParameters = {
+    outPrefix,
+    hlaFile,
+    localMinpValue,
+    pDepth,
+    globalConvergenceCutoff,
+    simulationDepth,
+    kmerMinDepth,
+    localMinOVE,
+    allAAInterchangeable,
+  };
+  return { ...runParameters, ...defaultParameters };
 }
 
 export async function createRun(params: {
@@ -173,30 +200,16 @@ export async function stopSharingRun(params: {
   return mapRunNode(records[0].get("run"));
 }
 
-function getCleanParameters(run: any) {
-  const {
-    outPrefix,
-    hlaFile,
-    localMinpValue,
-    pDepth,
-    globalConvergenceCutoff,
-    simulationDepth,
-    kmerMinDepth,
-    localMinOVE,
-    allAAInterchangeable,
-  } = run;
-  const runParameters = {
-    outPrefix,
-    hlaFile,
-    localMinpValue,
-    pDepth,
-    globalConvergenceCutoff,
-    simulationDepth,
-    kmerMinDepth,
-    localMinOVE,
-    allAAInterchangeable,
-  };
-  return { ...runParameters, ...defaultParameters };
+export async function getTCRCount(runId: string): Promise<number> {
+  const query: string = `
+    MATCH (n:Run { runID: $runId })-[:HAS_RESULT]->(t:GliphTCR)
+    RETURN count(t) as tcrCount
+  `;
+  const records = await runQuery(query, { runId });
+  if (records.length === 0) {
+    return 0;
+  }
+  return records[0].get("tcrCount").toNumber();
 }
 
 async function getProcessedDatasets(runId: string) {
@@ -308,5 +321,32 @@ export async function updateRunParameters(params: {
   if (records.length === 0) {
     throw new Error("Run not found");
   }
+  return mapRunNode(records[0].get("r"));
+}
+
+export async function updateRunStatus(payload: {
+  runId: string;
+  status: "completed" | "failed";
+  logs: string;
+  completeTime: string;
+}) {
+  const { runId, status, logs, completeTime } = payload;
+  const query: string = `
+    MATCH (r:Run { runID: $runId })
+    SET 
+      r.status = $status,
+      r.completedOn = datetime($completeTime)
+    RETURN r
+  `;
+  const records = await runQuery(query, {
+    runId,
+    status,
+    completeTime,
+  });
+  if (records.length === 0) {
+    throw new Error("Run not found");
+  }
+  const bucketName = `run-${runId}`;
+  await uploadFileToMinio(bucketName, "final.log", Buffer.from(logs));
   return mapRunNode(records[0].get("r"));
 }

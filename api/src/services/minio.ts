@@ -2,7 +2,7 @@ import { BucketItem } from "minio";
 import { minioClient, presignClient } from "../minio.ts";
 import { runQuery } from "../neo4j.ts";
 
-const ONE_DAY_IN_SECONDS = 24 * 60 * 60;
+const ONE_DAY_IN_SECONDS: number = 24 * 60 * 60;
 
 export async function createBucketIfNotExists(bucketName: string) {
   const exists: boolean = await minioClient.bucketExists(bucketName);
@@ -192,5 +192,36 @@ export async function makePresignedURL(bucketName: string, objectName: string) {
   } catch (error) {
     console.error(error);
     throw new Error(`Failed to create presigned URL: ${error}`);
+  }
+}
+
+export async function getFinalLogs(bucketName: string, objectName: string = "final.log") {
+  try {
+    const dataStream = await minioClient.getObject(bucketName, objectName);
+    return new Promise((resolve, _reject) => {
+      const chunks: any[] = [];
+
+      dataStream.on("data", (chunk: any) => {
+        chunks.push(chunk);
+      });
+
+      dataStream.on("end", () => {
+        resolve(Buffer.concat(chunks).toString("utf-8"));
+      });
+
+      dataStream.on("error", (error: any) => {
+        console.error(
+          `Error getting logs for bucket ${bucketName} from MinIO:`,
+          error,
+        );
+        resolve("");
+      });
+    });
+  } catch (error) {
+    console.error(
+      `Error getting logs for bucket ${bucketName} from MinIO:`,
+      error,
+    );
+    return "";
   }
 }

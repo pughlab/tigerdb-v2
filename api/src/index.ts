@@ -29,6 +29,8 @@ import {
   createUploadLoader,
   createUploadByObjectNameLoader,
 } from "./loaders/minio.ts";
+import { updateRunStatus } from "./services/run.ts";
+import { createRunSharedWithLoader } from "./loaders/run.ts";
 
 export type AppAuth = {
   sub?: string;
@@ -45,6 +47,7 @@ export type AppContext = {
   loaders: {
     datasetLoader: DataLoader<string, any>;
     sharedWithLoader: DataLoader<string, any>;
+    runSharedWithLoader: DataLoader<string, any>;
     tagLoader: DataLoader<string, any>;
     tagDatasetLoader: DataLoader<string, any>;
     processedDatasetLoader: DataLoader<string, any>;
@@ -53,7 +56,8 @@ export type AppContext = {
     processedDatasetObjectNameLoader: DataLoader<string, any>;
     datasetByObjectNameLoader: DataLoader<string, any>;
   };
-  rabbitChannel: ChannelWrapper;
+  workflowChannel: ChannelWrapper;
+  workflowStatusChannel: ChannelWrapper;
 };
 
 function mapKeycloakClaims(jwt: any): AppAuth {
@@ -85,6 +89,36 @@ const workflowChannel: ChannelWrapper = rabbitConnection.createChannel({
   json: true,
   setup: (channel: any) =>
     channel.assertQueue(process.env.RABBITMQ_QUEUE, { durable: true }),
+});
+const workflowStatusChannel: ChannelWrapper = rabbitConnection.createChannel({
+  json: true,
+  setup: function (channel: any) {
+    return Promise.all([
+      channel.assertQueue(process.env.RABBITMQ_STATUS_QUEUE, { durable: true }),
+      channel.prefetch(1),
+      channel.consume(process.env.RABBITMQ_STATUS_QUEUE, (msg: any) => {
+        if (msg !== null) {
+          console.log("Received run status message:", msg.content.toString());
+          try {
+            const payload: {
+              runId: string;
+              status: "completed" | "failed";
+              logs: string;
+              completeTime: string;
+            } = JSON.parse(msg.content.toString());
+            console.log("Run result payload:", payload);
+            updateRunStatus(payload).then(() => {
+              console.log("Run status updated");
+            });
+          } catch (error) {
+            console.error("Could not process the run result", error);
+          } finally {
+            channel.ack(msg);
+          }
+        }
+      })
+    ]);
+  }
 });
 
 const typesArray = await loadFiles(
@@ -177,6 +211,7 @@ app.use(
       const loaders = {
         datasetLoader: createDatasetLoader(),
         sharedWithLoader: createSharedWithLoader(),
+        runSharedWithLoader: createRunSharedWithLoader(),
         tagLoader: createTagLoader(),
         tagDatasetLoader: createDatasetsByTagNameLoader(),
         processedDatasetLoader: createProcessedDatasetLoader(),
@@ -187,7 +222,7 @@ app.use(
         datasetByObjectNameLoader: createDatasetByObjectNameLoader(),
       };
 
-      return { req, auth, jwt: auth, loaders, rabbitChannel: workflowChannel };
+      return { req, auth, jwt: auth, loaders, workflowChannel, workflowStatusChannel };
     },
   }),
 );

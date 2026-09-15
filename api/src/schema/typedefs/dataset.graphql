@@ -46,6 +46,11 @@ extend type Query {
     ))
     RETURN d
   """, columnName: "d"),
+  datasetAvailableTags(id: ID!): [Tag] @cypher(statement: """
+    MATCH (t:Tag)
+    WHERE NOT (:Dataset {datasetID: $id})-[:HAS_TAG]->(t)
+    RETURN t
+  """, columnName: "t")
 }
 
 extend type Mutation {

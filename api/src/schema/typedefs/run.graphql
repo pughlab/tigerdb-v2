@@ -21,9 +21,9 @@ type Run @node {
   sharedWith: [KeycloakUser!]! @relationship(type: "SHARED_WITH", direction: OUT)
   tcrs: [TCR!]! @relationship(type: "HAS_RESULT", direction: OUT)
   tcrCount: Int @customResolver
-  public: Boolean
+  public: Boolean @alias(property: "isPublic")
   getRunData: String
-  failedRunLogs: String
+  logs: String
   presignedURL: String @customResolver
   outPrefix: String
   localMinpValue: Float

@@ -28,8 +28,8 @@ extend type Query {
     statement: "MATCH (t:Tag) RETURN collect(DISTINCT t.name) AS names",
     columnName: "names"
   )
-  availableTags(datasetID: ID!): [Tag!]!  @cypher(
-    statement: "MATCH (t:Tag) WHERE NOT (t)<-[:HAS_TAG]-(:Dataset {datasetID: $datasetID}) RETURN t",
+  availableTags(datasetId: ID!): [Tag!]!  @cypher(
+    statement: "MATCH (t:Tag) WHERE NOT (t)<-[:HAS_TAG]-(:Dataset {datasetID: $datasetId}) RETURN t",
     columnName: "t"
   )
 }

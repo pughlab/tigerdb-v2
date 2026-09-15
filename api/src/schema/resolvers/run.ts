@@ -2,14 +2,16 @@ import { AppContext } from "../../index.ts";
 import {
   changeRunStatus,
   createRun,
-  createRunFiles, findPublicRun,
+  createRunFiles,
+  findPublicRun,
   findRunWithCreator,
+  getTCRCount,
   shareRun,
   stopSharingRun,
   updateRunParameters,
 } from "../../services/run.ts";
 import {
-  createBucketIfNotExists,
+  createBucketIfNotExists, getFinalLogs,
   listBucketObjects,
   makePresignedURL,
   uploadFileToMinio,
@@ -104,7 +106,7 @@ export default {
       context: AppContext,
     ) => {
       const { runId } = args.input;
-      const { rabbitChannel } = context;
+      const { workflowChannel } = context;
       let run;
       if (context.auth.isAuthenticated) {
         run = await findRunWithCreator(runId, context.auth.sub as string);
@@ -135,7 +137,7 @@ export default {
       );
 
       const workflowId = `workflow-${run.id}`;
-      await rabbitChannel.sendToQueue(process.env.RABBITMQ_QUEUE!, {
+      await workflowChannel.sendToQueue(process.env.RABBITMQ_QUEUE!, {
         workflowId,
         bucketName,
         paths,
@@ -155,12 +157,20 @@ export default {
         name?.includes("cluster.csv"),
       );
       if (!objectName) {
-        // throw new GraphQLError(`No results found in bucket ${bucketName}`);
         return ""
       }
       return makePresignedURL(bucketName, objectName);
     },
     referenceDatasetsCount: (run: any) => run?.referenceDatasets?.length || 0,
-    tcrCount: (run: any)=> run?.tcrs?.length || 0,
+    tcrCount: async (run: any)=> {
+      return await getTCRCount(run.id);
+    },
+    sharedWith: async (run: any, _args: unknown, context: AppContext) => {
+      return await context.loaders.runSharedWithLoader.load(run.id);
+    },
+    logs: async (run: any) => {
+      const bucketName: string = `run-${run.id}`;
+      return await getFinalLogs(bucketName);
+    }
   },
 };
