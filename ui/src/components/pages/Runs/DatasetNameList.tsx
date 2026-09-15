@@ -1,61 +1,22 @@
-import { gql } from "@apollo/client";
-import { useLazyQuery } from "@apollo/client/react";
 import * as React from "react";
 import { Label, Button, Icon } from "semantic-ui-react";
 
 function DatasetNameTag({
   dataset,
   updateSelectedDatasets,
-  updateAvailableUploads,
   projectSelected,
 }) {
   const [selected, setSelected] = React.useState(projectSelected || false);
-  const [getProcessedUploads] = useLazyQuery(
-    gql`
-      query processedDatasets($datasetID: ID!) {
-        processedDatasets(
-          where: { minioUpload: { dataset: { datasetID: $datasetID } } }
-        ) {
-          objectName
-          bucketName
-          filename
-          minioUpload {
-            dataset {
-              datasetID
-              name
-            }
-          }
-        }
-      }
-    `,
-    {
-      fetchPolicy: "network-only",
-    }
-  );
 
   React.useEffect(() => {
     if (selected) {
       updateSelectedDatasets((prev) => [...prev, dataset]);
-      getProcessedUploads({ variables: { datasetID: dataset.datasetID } })
-        .then((response) => {
-          if (response?.data && selected) {
-            updateAvailableUploads((prev) => [
-              ...prev,
-              ...(response.data as { processedDatasets: unknown[] }).processedDatasets,
-            ]);
-          }
-        });
     } else {
       updateSelectedDatasets((prev) =>
-        prev.filter((item) => item.datasetID !== dataset.datasetID)
-      );
-      updateAvailableUploads((prev) =>
-        prev.filter(
-          (item) => item.minioUpload.dataset.datasetID !== dataset.datasetID
-        )
+        prev.filter((item) => item.id !== dataset.id)
       );
     }
-  }, [dataset, getProcessedUploads, selected, updateAvailableUploads, updateSelectedDatasets]);
+  }, [dataset, selected,  updateSelectedDatasets]);
 
   return (
     <Label
@@ -76,13 +37,12 @@ function DatasetNameTag({
 export default function DatasetNameList({
   datasets,
   updateSelectedDatasets,
-  updateAvailableUploads,
   projectSelected,
 }) {
   const datasetIDs = new Set();
   const distinctDatasets = datasets.filter((dataset) => {
-    if (!datasetIDs.has(dataset.datasetID)) {
-      datasetIDs.add(dataset.datasetID);
+    if (!datasetIDs.has(dataset.id)) {
+      datasetIDs.add(dataset.id);
       return true;
     }
     return false;
@@ -92,10 +52,9 @@ export default function DatasetNameList({
       {distinctDatasets.length > 0 ? (
         distinctDatasets.map((dataset) => (
           <DatasetNameTag
-            key={dataset.datasetID}
+            key={dataset.id}
             dataset={dataset}
             updateSelectedDatasets={updateSelectedDatasets}
-            updateAvailableUploads={updateAvailableUploads}
             projectSelected={projectSelected}
           />
         ))

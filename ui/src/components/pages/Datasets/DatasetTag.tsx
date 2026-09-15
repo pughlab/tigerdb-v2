@@ -15,29 +15,33 @@ export const tagColors: { [key: string]: SemanticCOLORS } = {
 };
 
 const REMOVE_TAG_FROM_DATASET = gql`
-  mutation RemoveTagFromDataset($tagID: ID!, $datasetID: ID!) {
-    removeTagFromDataset(tagID: $tagID, datasetID: $datasetID) {
-      tagID
+  mutation RemoveTagFromDataset($input: RemoveTagFromDatasetInput!) {
+    removeTagFromDataset(input: $input) {
+      name
     }
   }
 `;
 
 export function DatasetTag({ tag, datasetID, setTags, canDelete = false }) {
-  const { tagID, name, category } = tag;
+  const { name, category } = tag;
   const color = category ? tagColors[category.toLowerCase()] : tagColors["other"];
   const [removeTag] = useMutation(REMOVE_TAG_FROM_DATASET, {
     variables: {
-      tagID: tagID,
-      datasetID: datasetID,
+      input: {
+        name,
+        datasetId: datasetID,
+      },
     },
     onCompleted: (data) => {
       setTags((prevState) =>
-        prevState.filter((tag) => data.removeTagFromDataset.tagID !== tag.tagID)
+        prevState.filter(
+          (tag) => data.removeTagFromDataset.tagID !== tag.tagID,
+        ),
       );
     },
   });
   return (
-    <Label key={tagID} color={color} style={{marginBottom: "5px"}}>
+    <Label key={name} color={color} style={{marginBottom: "5px"}}>
       {name}
       {canDelete ? (<Icon name="delete" onClick={() => removeTag()} />) : null}
     </Label>

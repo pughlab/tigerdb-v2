@@ -4,16 +4,13 @@ import * as React from "react";
 import { Button, Grid, Header, Icon, Input, Modal, Select, Tab, TabPane } from "semantic-ui-react";
 
 const ADD_TAG_TO_DATASET = gql`
-  mutation AddTagToDataset($datasetID: ID!, $name: String!) {
-    addTagToDataset(
-      datasetID: $datasetID, 
-      name: $name 
-    ) {
+  mutation AddTagToDataset($input: AddTagToDatasetInput!) {
+    addTagToDataset(input: $input) {
       name
       category
     }
   }
-`
+`;
 
 function getCategoryText(category: string) {
   const cat = category.trim().replaceAll("-", " ");
@@ -118,7 +115,12 @@ function NewTagPane({
     if (tagMutation.data?.findOrCreateTag) {
       const addTagToDatasetMutation = await gqlClient.mutate({
         mutation: ADD_TAG_TO_DATASET,
-        variables: { datasetID, tagID: tagMutation.data?.findOrCreateTag.name },
+        variables: {
+          input: {
+            datasetId: datasetID,
+            name: tagMutation.data?.findOrCreateTag.name,
+          },
+        },
       });
       if (addTagToDatasetMutation.data?.addTagToDataset) {
         const tag = addTagToDatasetMutation.data?.addTagToDataset
@@ -170,28 +172,28 @@ function NewTagPane({
 
 function ExistingTagPane({ datasetID, open, setOpen, setTags }) {
   const [selectedTag, setSelectedTag] = React.useState("");
-  const [addTagToDataset] = useMutation(
-    ADD_TAG_TO_DATASET, {
-      variables: {
-        datasetID, 
-        tagID: selectedTag
+  const [addTagToDataset] = useMutation(ADD_TAG_TO_DATASET, {
+    variables: {
+      input: {
+        datasetId: datasetID,
+        name: selectedTag,
       },
-      onCompleted: (data) => {
-        setTags(prevState => [
-          ...prevState,
-          { 
-            tag: data.addTagToDataset.name,
-            name: data.addTagToDataset.name,
-            category: data.addTagToDataset.category
-          }
-        ])
-      }
-    }
-  );
+    },
+    onCompleted: (data) => {
+      setTags((prevState) => [
+        ...prevState,
+        {
+          tag: data.addTagToDataset.name,
+          name: data.addTagToDataset.name,
+          category: data.addTagToDataset.category,
+        },
+      ]);
+    },
+  });
   const { loading, data, error, refetch } = useQuery(
     gql`
-      query FindAvailableTags($datasetID: ID!) {
-        findAvailableTags(datasetID: $datasetID) {
+      query FindAvailableTags($datasetId: ID!) {
+        datasetAvailableTags(id: $datasetId) {
           name
           category
         }
@@ -199,7 +201,7 @@ function ExistingTagPane({ datasetID, open, setOpen, setTags }) {
     `,
     {
       variables: {
-        datasetID,
+        datasetId: datasetID,
       },
     }
   );
@@ -215,10 +217,10 @@ function ExistingTagPane({ datasetID, open, setOpen, setTags }) {
     content = "Loading...";
   } else if (error) {
     content = `Error! ${error.cause}`;
-  } else if (data?.findAvailableTags.length === 0 ) {
+  } else if (data?.datasetAvailableTags.length === 0 ) {
     content = 'No available tags. You can create a new tag by using the "Create new tag" tab.';
   } else {
-    const tagOptions = data?.findAvailableTags.reduce(
+    const tagOptions = data?.datasetAvailableTags.reduce(
       (acc, tag) => [...acc, {
         key: tag.name,
         value: tag.name,

@@ -4,11 +4,11 @@ import { useMutation } from "@apollo/client/react";
 export default function useSubmitRunMutation() {
   const [submitRun] = useMutation(
     gql`
-      mutation submitRun($runID: ID!) {
-        submitRun(runID: $runID) {
-          run {
-            runID
-          }
+      mutation submitRun($input: SubmitRunInput!) {
+        submitRun(input: $input) {
+          id
+          status
+          workflowId
         }
       }
     `,

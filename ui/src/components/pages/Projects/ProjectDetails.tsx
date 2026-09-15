@@ -1,4 +1,3 @@
-import * as React from "react";
 import { type ErrorLike, gql, type OperationVariables } from "@apollo/client";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { useMemo, useState } from "react";

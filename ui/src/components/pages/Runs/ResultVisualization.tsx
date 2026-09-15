@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Message } from "semantic-ui-react";
 import DisplayTableFromPresignedURL from "../../common/table/DisplayTableFromPresignedURL.tsx";
-import GliphGraph from "./graph/GliphGraph.tsx";
+import GraphWrapper from "./GraphWrapper.tsx";
 
 export default function ResultVisualization({
   runID,
@@ -42,7 +42,7 @@ export default function ResultVisualization({
   }
 
   return (
-    <GliphGraph
+    <GraphWrapper
       runID={runID}
       hasGliphResults={hasGliphResults}
       presignedURL={presignedURL}

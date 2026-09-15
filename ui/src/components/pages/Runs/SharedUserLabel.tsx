@@ -7,24 +7,24 @@ import StopSharingConfirmation from "./StopSharingConfirmation.tsx";
 export default function SharedUserLabel({
   runID,
   user,
-  updateUsers,
+  refetch,
   canDelete = false,
 }: Readonly<{
   runID?: string;
   user: { name: string; email: string };
-  updateUsers: React.Dispatch<React.SetStateAction<any[]>>;
+  refetch: () => void;
   canDelete?: boolean;
 }>) {
   const { name, email } = user;
   const [stopSharing] = useMutation(
     gql`
-      mutation StopSharingRun($runID: ID!, $email: Email!) {
-        stopSharingRunWithUser(runID: $runID, email: $email) {
-          runID
+      mutation StopSharingRun($input: StopSharingRunInput!) {
+        stopSharingRun(input: $input) {
+          id
           name
-          isPublic
+          public
           sharedWith {
-            keycloakUserID
+            id
             name
             email
           }
@@ -33,11 +33,13 @@ export default function SharedUserLabel({
     `,
     {
       variables: {
-        email,
-        runID,
+        input: {
+          email,
+          runId: runID,
+        },
       },
       onCompleted: () => {
-        updateUsers((prev) => prev.filter((u) => u.email !== email));
+        refetch();
       },
     },
   );

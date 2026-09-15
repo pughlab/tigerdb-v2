@@ -5,8 +5,7 @@ import useUploadProcessedHeaders from '../../../hooks/useUploadProcessedHeadersM
 
 // Helper function to parse CSV with a dynamic delimiter
 const parseCSV = async (text: string, delimiter: string) => {
-  const rows = text.split('\n').map((row) => row.split(delimiter));
-  return rows;
+  return text.split('\n').map((row) => row.split(delimiter));
 };
 
 export default function FileHeaderSelection({ presignedURL, headerOptions, bucketName, objectName, filename, onSubmitHeaders }) {
@@ -88,9 +87,8 @@ export default function FileHeaderSelection({ presignedURL, headerOptions, bucke
   ];
 
   return (
-    <Segment color='blue'>
+    <Segment color="blue">
       <Message>
-
         <Header>Select File Delimiter:</Header>
         <Dropdown
           placeholder="Select delimiter"
@@ -110,25 +108,31 @@ export default function FileHeaderSelection({ presignedURL, headerOptions, bucke
       {/* Warn the user if more than the required number of columns are selected */}
       {extraHeaders && (
         <Message warning>
-          You can only select {requiredHeaderCount} columns. Please remove extra selections.
+          You can only select {requiredHeaderCount} columns. Please remove extra
+          selections.
         </Message>
       )}
 
       {/* Wrapper with horizontal scroll for the table */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ overflowX: "auto" }}>
         <Table celled>
           <Table.Header>
             <Table.Row>
               {fileContent[0]?.map((_, columnIndex) => (
-                <Table.HeaderCell key={columnIndex}>
+                <Table.HeaderCell key={headers[columnIndex]}>
                   <Dropdown
                     placeholder="Select header"
                     fluid
                     selection
                     options={headerOptionsWithNone}
-                    onChange={(_e, { value }) => handleHeaderChange(columnIndex, value)}
-                    value={headers[columnIndex] || 'none'}
-                    disabled={Object.keys(headers).length >= requiredHeaderCount && !headers[columnIndex]}
+                    onChange={(_e, { value }) =>
+                      handleHeaderChange(columnIndex, value)
+                    }
+                    value={headers[columnIndex] || "none"}
+                    disabled={
+                      Object.keys(headers).length >= requiredHeaderCount &&
+                      !headers[columnIndex]
+                    }
                   />
                 </Table.HeaderCell>
               ))}
@@ -136,27 +140,34 @@ export default function FileHeaderSelection({ presignedURL, headerOptions, bucke
           </Table.Header>
 
           <Table.Body>
-            {fileContent.slice(includesHeader ? 1 : 0, includesHeader ? 6 : 5).map((row, rowIndex) => (
-              <Table.Row key={rowIndex}>
-                {row.map((cell, columnIndex) => (
-                      <Table.Cell key={columnIndex}>
-                      <div style={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '150px' // You can adjust the width as needed
-                      }}>
-                        {cell}
-                      </div>
-                    </Table.Cell>
-                ))}
-              </Table.Row>
-            ))}
+            {fileContent
+              .slice(includesHeader ? 1 : 0, includesHeader ? 6 : 5)
+              .map((row) => {
+                const rowKey = row.join('-');
+                return (
+                  <Table.Row key={rowKey}>
+                    {row.map((cell, columnIndex) => (
+                      <Table.Cell key={`${rowKey}-${columnIndex}`}>
+                        <div
+                          style={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: "150px", // You can adjust the width as needed
+                          }}
+                        >
+                          {cell}
+                        </div>
+                      </Table.Cell>
+                    ))}
+                  </Table.Row>
+                );
+              })}
           </Table.Body>
           <Table.Footer fullWidth>
             <Table.Row>
               <Table.HeaderCell colSpan={fileContent[0]?.length || 1}>
-                <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                <div style={{ textAlign: "center", fontWeight: "bold" }}>
                   Showing {Math.min(rowsShown, totalRows)} of {totalRows} rows
                 </div>
               </Table.HeaderCell>
@@ -165,17 +176,23 @@ export default function FileHeaderSelection({ presignedURL, headerOptions, bucke
         </Table>
       </div>
       <Divider horizontal />
-      <Button color='blue' fluid 
-        onClick={() => {handleUploadProcessedHeaders({
-          bucketName,
-          objectName,
-          filename,
-          headers,
-          selectedDelimiter,
-          includesHeader,
-        });}}
+      <Button
+        color="blue"
+        fluid
+        onClick={() => {
+          handleUploadProcessedHeaders({
+            bucketName,
+            objectName,
+            filename,
+            headers,
+            selectedDelimiter,
+            includesHeader,
+          });
+        }}
         disabled={isSubmitDisabled}
-        content={isSubmitDisabled ? 'Select at least 2 headers' : 'Submit Headers'} 
+        content={
+          isSubmitDisabled ? "Select at least 2 headers" : "Submit Headers"
+        }
       />
     </Segment>
   );

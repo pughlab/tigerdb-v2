@@ -2,7 +2,7 @@ import * as React from "react";
 import { Button, ButtonOr, Dimmer, Grid, Header, Icon, Image, Message, Segment } from "semantic-ui-react";
 import tigerdbLogo from "../../logos/tigerdb.png";
 import Logs from "./Logs.tsx";
-import TCRInfo from "./graph/TCRInfo.tsx";
+import TCRInfo from "./TCRInfo.tsx";
 import ResultVisualization from "./ResultVisualization.tsx";
 
 export default function RunResults({

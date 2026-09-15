@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@apollo/client": "^4.2.3",
+    "@cosmograph/react": "^2.5.1",
     "@reduxjs/toolkit": "^2.12.0",
     "@visx/axis": "^4.0.0",
     "@visx/event": "^4.0.0",
@@ -27,13 +28,11 @@
     "fomantic-ui-css": "^2.9.4",
     "jotai": "^2.20.1",
     "keycloak-js": "^26.2.4",
-    "react": "^19.2.7",
+    "react": "^18.3.1",
     "react-calendar-heatmap": "^1.10.0",
     "react-csv": "^2.2.2",
-    "react-dom": "^19.2.7",
+    "react-dom": "^18.3.1",
     "react-dropzone": "^15.0.0",
-    "react-force-graph-2d": "^1.29.1",
-    "react-force-graph-3d": "^1.29.1",
     "react-icons": "^5.6.0",
     "react-redux": "^9.3.0",
     "react-router": "^7.17.0",
@@ -54,13 +53,13 @@
     "@types/react-calendar-heatmap": "^1.9.0",
     "@types/react-csv": "^1.1.10",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^7.3.6"
   }
 }

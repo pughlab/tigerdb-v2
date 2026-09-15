@@ -2,8 +2,8 @@ import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 
 const IMPORT_GLIPH_RESULTS = gql`
-  mutation ImportGliphResults($runID: ID!, $presignedURL: String!) {
-    importGliphResults(runID: $runID, presignedURL: $presignedURL)
+  mutation ImportGliphResults($input: GraphInput!) {
+    importResults(input: $input)
   }
 `;
 

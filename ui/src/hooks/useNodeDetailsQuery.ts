@@ -3,7 +3,7 @@ import { useQuery } from "@apollo/client/react";
 
 const GET_NODE_DETAILS = gql`
   query($cdr3b: String!) {
-    nodeDetailsByCDR3b(cdr3b: $cdr3b) {
+    node(cdr3b: $cdr3b) {
       cdr3b
       v_gene
       projectID
@@ -32,5 +32,5 @@ export default function useNodeDetailsQuery(cdr3b: string) {
     variables: { cdr3b },
     skip: !cdr3b,
   })
-  return { data: data?.nodeDetailsByCDR3b, loading, error }
+  return { data: data?.node, loading, error }
 }

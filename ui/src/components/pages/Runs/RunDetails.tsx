@@ -11,7 +11,6 @@ import {
   type SemanticICONS,
 } from "semantic-ui-react";
 import { useParams } from "react-router";
-import { useState } from "react";
 
 import useSubmitRunMutation from "../../../hooks/useSubmitRunMutation";
 import useRunDetailsQuery from "../../../hooks/useRunDetailsQuery";
@@ -24,6 +23,8 @@ import useIsAdmin from "../../../hooks/useIsAdmin";
 import RunResults from "./RunResults.tsx";
 import RunActionsButton from "./RunActionsButton.tsx";
 import RunParametersForm from "./RunParametersForm.tsx";
+import { useQuery } from "@apollo/client/react";
+import { gql } from "@apollo/client";
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -61,11 +62,16 @@ export default function RunDetails() {
   const { isAdmin } = useIsAdmin();
   const submitRun = useSubmitRunMutation();
   const { importGliph, loading: importLoading } = useImportGliphMutation();
-  const [sharedUsers, setSharedUsers] = useState<any[]>(run?.sharedWith || []);
-
-  if (run?.sharedWith?.length > 0) {
-    setSharedUsers(run.sharedWith);
-  }
+  const { data: ownerData } = useQuery(
+    gql`
+      query IsRunOwner($runID: ID!) {
+        isRunOwner(id: $runID)
+      }
+    `,
+    { variables: { runID } },
+  );
+  const sharedUsers: any[] = run?.sharedWith || [];
+  const isOwner = ownerData?.isRunOwner ?? false;
 
   if (runDetailsLoading) {
     return (
@@ -91,8 +97,6 @@ export default function RunDetails() {
     referenceDatasets,
     status,
     presignedURL,
-    isPublic,
-    isOwner,
   } = run;
 
   const createdOnDate = new Date(createdOn).toLocaleString("en-US", {
@@ -143,7 +147,7 @@ export default function RunDetails() {
             presignedURL={presignedURL}
             runID={runID}
           />
-          <ShareRunModal runID={runID} updateSharedUsers={setSharedUsers} />
+          <ShareRunModal runID={runID} refetch={refetch} />
         </ButtonGroup>
         <Message color={"grey"}>
           <Divider horizontal content="Run Details" />
@@ -152,7 +156,7 @@ export default function RunDetails() {
             <List.Item icon="calendar" content={`${createdOnDate}`} />
             <List.Item icon="user" content={`${createdBy.email}`} />
             <List.Item icon="info circle" content={`runID: ${runID}`} />
-            {!isPublic && sharedUsers?.length > 0 && (
+            {!run?.public && sharedUsers?.length > 0 && (
               <List.Item>
                 <List.Icon name="users" style={{ paddingTop: "0.5em" }} />
                 <List.Content style={{ paddingLeft: "0px" }}>
@@ -168,7 +172,7 @@ export default function RunDetails() {
                         key={user.email}
                         user={user}
                         canDelete={isOwner || isAdmin}
-                        updateUsers={setSharedUsers}
+                        refetch={refetch}
                         runID={runID}
                       />
                     ))}
@@ -194,7 +198,7 @@ export default function RunDetails() {
           status={status}
           presignedURL={presignedURL}
           runID={runID || ""}
-          hasGliphResults={run?.gliphTCRsAggregate?.count > 0}
+          hasGliphResults={run?.tcrCount > 0}
           importGliph={importGliph}
           importLoading={importLoading}
         />
@@ -207,7 +211,11 @@ export default function RunDetails() {
           animated="vertical"
           disabled={status !== "pending"}
           onClick={() => {
-            submitRun({ variables: { runID: runID } }).then(() => refetch());
+            submitRun({
+              variables: {
+                input: { runId: runID },
+              },
+            }).then(() => refetch());
           }}
           content={submitButtonText}
         />

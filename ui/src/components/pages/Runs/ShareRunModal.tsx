@@ -3,7 +3,7 @@ import {gql} from "@apollo/client";
 import { useLazyQuery, useMutation } from "@apollo/client/react";
 import {Button, Divider, Form, Header, Icon, Label, Modal} from "semantic-ui-react";
 
-export default function ShareRunModal({ runID, updateSharedUsers }) {
+export default function ShareRunModal({ runID, refetch }) {
   const [open, setOpen] = useState(false);
   const [userDoesNotExistError, setUserDoesNotExistError] = useState(false);
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
@@ -15,12 +15,12 @@ export default function ShareRunModal({ runID, updateSharedUsers }) {
     }
   )
   const [shareWithUsers] = useMutation(gql`
-    mutation ShareRun($runID: ID!, $emails: [Email!]!) {
-      shareRunWithUsers(runID: $runID, emails: $emails) {
-        runID
+    mutation ShareRun($input: ShareRunInput!) {
+      shareRun(input: $input) {
+        id
         name
         sharedWith {
-          keycloakUserID
+          id
           name
           email
         }
@@ -99,13 +99,15 @@ export default function ShareRunModal({ runID, updateSharedUsers }) {
               if (selectedEmails.length > 0) {
                 shareWithUsers({
                   variables: {
-                    runID,
-                    emails: selectedEmails
+                    input: {
+                      runId: runID,
+                      emails: selectedEmails,
+                    },
                   },
-                  onCompleted(data) {
-                    updateSharedUsers(data.shareRunWithUsers.sharedWith);
-                  }
-                })
+                  onCompleted() {
+                    refetch();
+                  },
+                });
               }
               setSelectedEmails([]);
               setOpen(false);

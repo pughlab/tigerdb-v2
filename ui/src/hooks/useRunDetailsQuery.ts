@@ -11,6 +11,7 @@ export default function useRunDetailsQuery({ runID }: { runID: string }) {
           status
           description
           createdOn
+          public
           createdBy {
             id
             email
