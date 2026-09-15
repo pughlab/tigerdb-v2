@@ -2,7 +2,7 @@ import "dotenv/config"
 import amqp, {ChannelWrapper} from "amqp-connection-manager";
 import {startPipeline} from "./worker.ts";
 
-const connection = amqp.connect([`amqp://${process.env.RABBITMQ_USER!}:${process.env.RABBITMQ_PASSWORD!}@${process.env.RABBITMQ_HOST!}:${process.env.RABBITMQ_PORT!}`]);
+export const connection = amqp.connect([`amqp://${process.env.RABBITMQ_USER!}:${process.env.RABBITMQ_PASSWORD!}@${process.env.RABBITMQ_HOST!}:${process.env.RABBITMQ_PORT!}`]);
 connection.on("connect", () => {
     console.log("Connected to RabbitMQ");
 });

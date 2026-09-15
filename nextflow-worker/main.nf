@@ -8,15 +8,18 @@ params.outPrefix = "gliph_output"
 params.minioInputPath = ""
 // params.destinationPath = "s3://some-bucket/some-result"
 
-params.script_file = "$projectDir/../scripts/TIGERdb_inputPrep.R"
-params.external_spcfc_file = "$projectDir/../references/TIGERdb_MinimalScoreConfidence3_VersionII.tsv"
 
-params.ref_CD48 = "$projectDir/../references/human_v2.0/ref_CD48_v2.0.txt"
-params.ref_V_CD48 = "$projectDir/../references/human_v2.0/ref_V_CD48_v2.0.txt"
-params.ref_L_CD48 = "$projectDir/../references/human_v2.0/ref_L_CD48_v2.0.txt"
+
+
+params.script_file = "$projectDir/scripts/TIGERdb_inputPrep.R"
+params.external_spcfc_file = "$projectDir/references/TIGERdb_MinimalScoreConfidence3_VersionII.tsv"
+
+params.ref_CD48 = "$projectDir/references/human_v2.0/ref_CD48_v2.0.txt"
+params.ref_V_CD48 = "$projectDir/references/human_v2.0/ref_V_CD48_v2.0.txt"
+params.ref_L_CD48 = "$projectDir/references/human_v2.0/ref_L_CD48_v2.0.txt"
 
 process INPUT_PREP {
-    // publishDir "${params.destinationPath}", mode: 'copy'
+    publishDir "${params.destinationPath}", mode: 'copy'
     container 'crescentdev/tidyverse-optparse:latest' // e.g., rocker/r-base
 
     input:
@@ -30,15 +33,13 @@ process INPUT_PREP {
 
     script:
     """
-    datasets_file=\$(ls datasets.tsv)
-
-    # Run the R script as in the CWL
-    Rscript ${script_file} -e ${external_file} -d \${datasets_file} -x . -p ${params.outPrefix}
+    export TMPDIR="."
+    Rscript ${script_file} -e ${external_file} -d datasets.tsv -x . -p ${params.outPrefix}
     """
 }
 
 process RUN_GLIPH {
-    //publishDir "${params.destinationPath}", mode: 'copy'
+    publishDir "${params.destinationPath}", mode: 'copy'
     container 'crescentdev/gliph2:latest'
 
     input:
@@ -59,28 +60,30 @@ process RUN_GLIPH {
 
     script:
     """
-    /irtools.centos -c ${parameter_file}
+    irtools.centos -c ${parameter_file}
     """
 }
 
 process CLEAN_CLUSTER {
-    // publishDir "${params.destinationPath}", mode: 'copy'
-    container 'alpine:latest' // light sed
+    publishDir "${params.destinationPath}", mode: 'copy'
+    container 'ubuntu:26.04'
 
     input:
     path cluster_csv
 
     output:
-    path "cleaned_${cluster_csv}", emit: cleaned_cluster_output
+    path "${cluster_csv}", emit: cleaned_cluster_output
+    path "original_${cluster_csv}", emit: original_cluster_output
 
     script:
     """
-    sed '/^[[:space:]]*\$/d' ${cluster_csv} > cleaned_${cluster_csv}
+    mv "${cluster_csv}" "original_${cluster_csv}"
+    sed '/^[[:space:]]*\$/d' "original_${cluster_csv}" | awk 'BEGIN{FS=OFS=","} {for(i=1;i<=NF;i++) if(\$i=="-") \$i=""; print}' > "${cluster_csv}"
     """
 }
 
 workflow {
-    input_files_ch = Channel.fromPath(params.minioInputPath ? params.minioInputPath.split(',') : [])
+    input_files_ch = channel.fromPath(params.minioInputPath ? params.minioInputPath.split(',').toList() : [])
 
     // Step 1: Prep Input
     prep_out = INPUT_PREP(

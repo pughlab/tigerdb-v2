@@ -122,9 +122,12 @@ services:
     container_name: tigerdb-funnel
     privileged: true
     entrypoint: "funnel server run --Server.HTTPPort 8000 --Server.RPCPort 9090 --config /opt/funnel/funnel-config.yml"
+    environment:
+      - S3_FORCE_PATH_STYLE=true
     volumes:
       - ./funnel/funnel-config.yml:/opt/funnel/funnel-config.yml
       - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/funnel-work:/tmp/funnel-work
 
 volumes:
   tigerdb_keycloak:

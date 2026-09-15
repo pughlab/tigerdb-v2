@@ -12,5 +12,6 @@ LocalStorage:
     - ./
     - /opt/funnel/funnel
     - /opt/funnel/service
+    - /tmp/funnel-work
 
 Database: boltdb
