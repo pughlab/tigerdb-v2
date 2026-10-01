@@ -12,7 +12,7 @@ import {
 
 import { tagColors, DatasetTag } from "./DatasetTag";
 import AddTagModal from "./AddTagModal";
-import MinioBucket from "../../common/minio";
+import DatasetContent from "./DatasetContent.tsx";
 import useDeleteDatasetMutation from "../../../hooks/useDeleteDatasetMutation";
 
 export default function DatasetListItem({
@@ -24,7 +24,7 @@ export default function DatasetListItem({
   permissions
 }) {
   const { id: datasetID, name, tags: datasetTags, curated, annotated } = dataset;
-  const [isMinioBucketOpen, setIsMinioBucketOpen] = useState(false);
+  const [isContentOpen, setIsContentOpen] = useState(false);
   const [tags, setTags] = useState(
     datasetTags.reduce(
       (acc, tag) => [
@@ -42,12 +42,12 @@ export default function DatasetListItem({
     <>
       <List.Item
         as={Segment}
-        onClick={() => setIsMinioBucketOpen(!isMinioBucketOpen)}
+        onClick={() => setIsContentOpen(!isContentOpen)}
       >
         <List.Content floated="right" basic>
           <Icon
             size="large"
-            name={isMinioBucketOpen ? "chevron up" : "chevron down"}
+            name={isContentOpen ? "chevron up" : "chevron down"}
           />
         </List.Content>
         <List.Content floated="right" basic>
@@ -68,7 +68,9 @@ export default function DatasetListItem({
                         "Are you sure you want to delete this dataset?",
                       )
                     ) {
-                      deleteDataset({ variables: { datasetID } });
+                      deleteDataset({
+                        variables: { input: { datasetId: datasetID } },
+                      });
                     }
                   }}
                 />
@@ -107,8 +109,8 @@ export default function DatasetListItem({
           )}
         </List.Content>
       </List.Item>
-      {isMinioBucketOpen && (
-        <MinioBucket
+      {isContentOpen && (
+        <DatasetContent
           datasetID={`${datasetID}`}
           isReference={isReferenceProject}
           isPublic={isPublicProject}

@@ -1,6 +1,6 @@
 import {runQuery} from "../neo4j.ts";
 import {randomUUID} from "node:crypto";
-import {makePresignedURL} from "./minio.ts";
+import {makePresignedURL} from "./storage.ts";
 
 function mapCuratedAnnotationNode(node: any) {
     const props = node.properties;
@@ -65,12 +65,8 @@ export async function createAnnotationVariables(curatedAnnotationId: string, buc
             { batchSize: 10000, iterateList: true, parallel: true, params: { curatedAnnotationId: $curatedAnnotationId, presignedURL: $presignedURL, inputFields: $inputFields } }
         )
     `
-    const presignedURL = await makePresignedURL(bucketName, objectName);
-    const internalDockerURL = presignedURL.replace(
-      "localhost",
-      "tigerdb-gateway",
-    );
-    await runQuery(query, { curatedAnnotationId, presignedURL: internalDockerURL, inputFields });
+    const presignedURL = await makePresignedURL(bucketName, objectName, { internal: true });
+    await runQuery(query, { curatedAnnotationId, presignedURL, inputFields });
 }
 
 export async function generateTags(curatedAnnotationId: string, datasetId: string) {

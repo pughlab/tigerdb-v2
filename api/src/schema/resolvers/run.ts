@@ -3,6 +3,7 @@ import {
   changeRunStatus,
   createRun,
   createRunFiles,
+  deleteRun,
   findPublicRun,
   findRunWithCreator,
   getTCRCount,
@@ -11,11 +12,11 @@ import {
   updateRunParameters,
 } from "../../services/run.ts";
 import {
-  createBucketIfNotExists, getFinalLogs,
+  createBucketIfNotExists, deleteBucket, getFinalLogs,
   listBucketObjects,
   makePresignedURL,
-  uploadFileToMinio,
-} from "../../services/minio.ts";
+  uploadFile,
+} from "../../services/storage.ts";
 import { assertAuthenticated } from "../../utils/auth.ts";
 import { GraphQLError } from "graphql";
 
@@ -49,6 +50,23 @@ export default {
       });
       await createBucketIfNotExists(`run-${run.id}`);
       return run;
+    },
+    deleteRun: async (
+      _parent: unknown,
+      args: {
+        input: {
+          runId: string;
+        };
+      },
+      context: AppContext,
+    ) => {
+      const { isAuthenticated } = context.auth;
+      const runWasDeleted: boolean = await deleteRun(args.input.runId, isAuthenticated);
+      if (runWasDeleted) {
+        const bucketWasDeleted = await deleteBucket(`run-${args.input.runId}`);
+        return bucketWasDeleted ? "Run deleted successfully" : "Run deleted, but files remain on the server";
+      }
+      return "Run was not deleted";
     },
     shareRun: async (
       _parent: unknown,
@@ -125,16 +143,12 @@ export default {
         `s3://${bucketName}/parameter_file.txt`,
         `s3://${bucketName}/datasets.tsv`,
       ];
-      await uploadFileToMinio(
+      await uploadFile(
         bucketName,
         "parameter_file.txt",
         Buffer.from(parameterFile),
       );
-      await uploadFileToMinio(
-        bucketName,
-        "datasets.tsv",
-        Buffer.from(datasetsTsv),
-      );
+      await uploadFile(bucketName, "datasets.tsv", Buffer.from(datasetsTsv));
 
       const workflowId = `workflow-${run.id}`;
       await workflowChannel.sendToQueue(process.env.RABBITMQ_QUEUE!, {
@@ -152,17 +166,17 @@ export default {
       const bucketName = `run-${run.id}`;
       const bucketItemNames: (string | undefined)[] = (
         await listBucketObjects(bucketName)
-      ).map((item) => item.name);
+      ).map((item) => item.Key);
       const objectName: string | undefined = bucketItemNames.find((name) =>
         name?.includes("cluster.csv"),
       );
       if (!objectName) {
-        return ""
+        return "";
       }
       return makePresignedURL(bucketName, objectName);
     },
     referenceDatasetsCount: (run: any) => run?.referenceDatasets?.length || 0,
-    tcrCount: async (run: any)=> {
+    tcrCount: async (run: any) => {
       return await getTCRCount(run.id);
     },
     sharedWith: async (run: any, _args: unknown, context: AppContext) => {
@@ -171,6 +185,6 @@ export default {
     logs: async (run: any) => {
       const bucketName: string = `run-${run.id}`;
       return await getFinalLogs(bucketName);
-    }
+    },
   },
 };

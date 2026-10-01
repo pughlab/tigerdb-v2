@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
  */
 
 params.outPrefix = "gliph_output"
-params.minioInputPath = ""
+params.inputPath = ""
 // params.destinationPath = "s3://some-bucket/some-result"
 
 
@@ -83,7 +83,7 @@ process CLEAN_CLUSTER {
 }
 
 workflow {
-    input_files_ch = channel.fromPath(params.minioInputPath ? params.minioInputPath.split(',').toList() : [])
+    input_files_ch = channel.fromPath(params.inputPath ? params.inputPath.split(',').toList() : [])
 
     // Step 1: Prep Input
     prep_out = INPUT_PREP(

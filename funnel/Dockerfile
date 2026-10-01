@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS build-env
+FROM golang:1.27-alpine AS build-env
 RUN apk add make git bash build-base
 ENV GOPATH=/go
 ENV PATH="/go/bin:${PATH}"
@@ -9,7 +9,7 @@ RUN go mod download
 RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 # final stage
-FROM alpine:20260127
+FROM alpine:3.24.2
 RUN apk add --no-cache docker-cli docker
 WORKDIR /opt/funnel
 EXPOSE 8000 9090

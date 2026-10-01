@@ -1,4 +1,5 @@
 import { runQuery, toNeo4jInt } from "../neo4j.ts";
+import { listBucketObjects, makePresignedURL } from "./storage.ts";
 
 const MINIMUM_COMMUNITY_SIZE = 4;
 const colors: Record<string, string> = {
@@ -304,7 +305,16 @@ export async function tearDown(graphName: string) {
   await runQuery(query);
 }
 
-export async function createTCRNodes(runId: string, presignedURL: string) {
+export async function createTCRNodes(runId: string) {
+  const bucketName: string = `run-${runId}`;
+  const bucketObjects = await listBucketObjects(bucketName);
+  const clusterFile = bucketObjects.find((obj) =>
+    obj.Key?.includes("cluster.csv"),
+  )?.Key;
+  if (!clusterFile) {
+    throw new Error(`Graph input file not found for run ${runId}`);
+  }
+  const presignedURL = await makePresignedURL(bucketName, clusterFile, { internal: true });
   const query: string = `
     CALL apoc.periodic.iterate(
       'CALL apoc.load.csv($presignedURL, {sep: ",", header: true, failOnError: false}) YIELD list WHERE list IS NOT NULL AND size(list) > 0 RETURN list',

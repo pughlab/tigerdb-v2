@@ -2,10 +2,8 @@ import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 
 const DELETE_DATASET = gql`
-  mutation deleteDatasets($datasetID: ID!) {
-    deleteDatasets(where: { id: { eq: $datasetID } }) {
-      nodesDeleted
-    }
+  mutation deleteDataset($input: DeleteDatasetInput!) {
+    deleteDataset(input: $input)
   }
 `;
 

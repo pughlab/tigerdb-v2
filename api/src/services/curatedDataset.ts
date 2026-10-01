@@ -1,6 +1,6 @@
 import { runQuery } from "../neo4j.ts";
 import { randomUUID } from "node:crypto";
-import { makePresignedURL } from "./minio.ts";
+import { makePresignedURL } from "./storage.ts";
 import { getHeaderNodes } from "./header.ts";
 
 function mapCuratedDatasetNode(node: any) {
@@ -42,8 +42,7 @@ export async function createCuratedDatasetVariables(
   objectName: string,
   delimiter: string,
 ) {
-  const presignedURL = await makePresignedURL(bucketName, objectName);
-  const internalDockerURL = presignedURL.replace('localhost', 'tigerdb-gateway');
+  const presignedURL = await makePresignedURL(bucketName, objectName, { internal: true });
   const headers = await getHeaderNodes(objectName);
   const query = `
         CALL apoc.periodic.iterate(
@@ -52,12 +51,12 @@ export async function createCuratedDatasetVariables(
             CREATE (a:DatasetVariable {datasetVariableID: apoc.create.uuid(), ${headers.map((header) => `${header.name.replace(/[^a-zA-Z0-9]/g, "")}: list[${header.index}]`).join(", ")} }), 
             (b)-[:HAS_DATASET_VARIABLE]->(a) 
             RETURN a',
-            { batchSize: 10000, iterateList: true, parallel: true, params: { curatedDatasetId: $curatedDatasetId, presignedURL: $internalDockerURL, selectedDelimiter: $selectedDelimiter } }
+            { batchSize: 10000, iterateList: true, parallel: true, params: { curatedDatasetId: $curatedDatasetId, presignedURL: $presignedURL, selectedDelimiter: $selectedDelimiter } }
         )
     `;
   await runQuery(query, {
     curatedDatasetId,
-    internalDockerURL,
+    presignedURL,
     selectedDelimiter: delimiter,
   });
 }

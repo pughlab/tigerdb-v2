@@ -2,7 +2,7 @@ type Dataset @node {
   id: ID! @id @alias(property: "datasetID")
   name: String! 
   bucketName: String!
-  uploads: [MinioUpload!]! @relationship(type: "HAS_FILE", direction: OUT)
+  uploads: [FileUpload!]! @relationship(type: "HAS_FILE", direction: OUT)
   createdOn: DateTime! @timestamp(operations: [CREATE])
   tags: [Tag!]! @relationship(type: "HAS_TAG", direction: OUT)
   project: Project @relationship(type: "HAS_DATASET", direction: IN)
@@ -18,6 +18,10 @@ input CreateDatasetInput {
 input UpdateDatasetInput {
   datasetId: ID!
   name: String
+}
+
+input DeleteDatasetInput {
+  datasetId: ID!
 }
 
 extend type Query {
@@ -56,4 +60,5 @@ extend type Query {
 extend type Mutation {
   createDataset(input: CreateDatasetInput!): Dataset!,
   updateDataset(input: UpdateDatasetInput!): Dataset!,
+  deleteDataset(input: DeleteDatasetInput!): String!,
 }

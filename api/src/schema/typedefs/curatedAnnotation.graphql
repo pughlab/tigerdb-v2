@@ -2,7 +2,7 @@ type CuratedAnnotation @node {
     id: ID! @id @alias(property: "curatedAnnotationID")
     variables: [AnnotationVariable!]! @relationship(type: "HAS_ANNOTATION_VARIABLE", direction: OUT)
     dataset: Dataset @relationship(type: "HAS_CURATED_ANNOTATION", direction: IN)
-    minioUpload: MinioUpload @relationship(type: "GENERATED_CURATED_ANNOTATION", direction: IN)
+    upload: FileUpload @relationship(type: "GENERATED_CURATED_ANNOTATION", direction: IN)
 }
 
 type EpitopeSpeciesCount {

@@ -2,10 +2,12 @@ import type { AppContext } from "../../index.ts";
 import { assertAuthenticated } from "../../utils/auth.ts";
 import {
   createDataset,
+  deleteDataset,
   isAnnotated,
   isCurated,
   updateDataset,
 } from "../../services/dataset.ts";
+import { deleteBucket } from "../../services/storage.ts";
 
 export default {
   Mutation: {
@@ -26,6 +28,20 @@ export default {
       assertAuthenticated(context);
 
       return updateDataset({ input: args.input, userId: context.auth.sub });
+    },
+    deleteDataset: async (
+      _parent: unknown,
+      args: { input: { datasetId: string } },
+      context: AppContext,
+    ) => {
+      assertAuthenticated(context);
+      const datasetWasDeleted = await deleteDataset({ input: args.input, userId: context.auth.sub });
+      if (datasetWasDeleted) {
+        const bucketName: string = `dataset-${args.input.datasetId}`;
+        const bucketWasDeleted = await deleteBucket(bucketName);
+        return bucketWasDeleted ? "Dataset deleted successfully" : "Dataset was deleted, but files remain on the server";
+      }
+      return "Dataset was not deleted";
     },
   },
   Dataset: {

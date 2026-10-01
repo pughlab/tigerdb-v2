@@ -11,7 +11,7 @@ type Run @node {
   name: String!
   description: String
   processedDatasets: [ProcessedDataset!]! @relationship(type: "HAS_RUN", direction: IN)
-  referenceDatasets: [MinioUpload!]! @relationship(type: "HAS_RUN", direction: IN)
+  referenceDatasets: [FileUpload!]! @relationship(type: "HAS_RUN", direction: IN)
   referenceDatasetsCount: Int
   createdOn: DateTime! @timestamp(operations: [CREATE])
   submittedOn: String
@@ -50,6 +50,10 @@ input ShareRunInput {
 input StopSharingRunInput {
   runId: ID!
   email: Email!
+}
+
+input DeleteRunInput {
+  runId: ID!
 }
 
 input UpdateRunParametersInput {
@@ -107,5 +111,5 @@ extend type Mutation {
   stopSharingRun(input: StopSharingRunInput!): Run!
   submitRun(input: SubmitRunInput!): Run!
   updateRunParameters(input: UpdateRunParametersInput!): Run!
-  deleteRun(runId: ID!): String!
+  deleteRun(input: DeleteRunInput!): String!
 }

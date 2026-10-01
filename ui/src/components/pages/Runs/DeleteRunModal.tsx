@@ -6,8 +6,8 @@ import { Button, Icon, Modal, Popup } from 'semantic-ui-react';
 export function DeleteRunModal({ run, refetch }) {
   const [open, setOpen] = React.useState(false);
   const [deleteRun] = useMutation(gql`
-    mutation DeleteRun($runID: ID!) {
-      deleteRun(runID: $runID)
+    mutation DeleteRun($input: DeleteRunInput!) {
+      deleteRun(input: $input)
     }
   `, {onCompleted: () => { refetch() }})
   function toggleOpen(e) {
@@ -17,7 +17,7 @@ export function DeleteRunModal({ run, refetch }) {
 
   function removeRun(e, run) {
     e.stopPropagation();
-    deleteRun({ variables: { runID: run?.runID }})
+    deleteRun({ variables: { input: { runId: run?.id } } });
     setOpen(!open);
   }
 

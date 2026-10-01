@@ -1,7 +1,7 @@
 packages:
   - 'api'
   - 'ui'
-  - 'nextflow-worker'
+  - 'worker'
 allowBuilds:
   '@apollo/protobufjs': true
   esbuild: true

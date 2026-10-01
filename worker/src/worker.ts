@@ -32,7 +32,7 @@ export function startPipeline(payload: {
         '-w', `s3://${payload.bucketName}/work`,
         '--outPrefix', `${payload.outPrefix}`,
         '--destinationPath', `s3://${payload.bucketName}/results`,
-        '--minioInputPath', payload.paths.join(',')
+        '--inputPath', payload.paths.join(',')
     ]
     const options: any = {
         env: { ...process.env },
