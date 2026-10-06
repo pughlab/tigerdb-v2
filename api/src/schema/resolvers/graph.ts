@@ -52,16 +52,13 @@ export default {
       args: {
         input: {
           runId: string;
-          presignedURL: string;
+          presignedURL?: string;
         };
       },
     ) => {
-      const { runId, presignedURL } = args.input;
-      const internalDockerURL = presignedURL.includes("localhost")
-        ? presignedURL.replace("localhost", "tigerdb-gateway")
-        : presignedURL;
+      const { runId } = args.input;
       try {
-        await createTCRNodes(runId, internalDockerURL);
+        await createTCRNodes(runId);
         await createTCREdges(runId);
         await removeTemporaryClusters(runId);
         return true;

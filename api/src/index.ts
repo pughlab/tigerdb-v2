@@ -15,6 +15,7 @@ import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
 import "dotenv/config";
 import DataLoader from "dataloader";
 import amqp, { ChannelWrapper } from "amqp-connection-manager";
+import compression from 'compression';
 
 import { driver } from "./neo4j.js";
 import {
@@ -28,7 +29,7 @@ import { createProcessedDatasetByObjectNameLoader, createProcessedDatasetLoader 
 import {
   createUploadLoader,
   createUploadByObjectNameLoader,
-} from "./loaders/minio.ts";
+} from "./loaders/storage.ts";
 import { updateRunStatus } from "./services/run.ts";
 import { createRunSharedWithLoader } from "./loaders/run.ts";
 
@@ -183,6 +184,7 @@ const server = new ApolloServer<AppContext>({
 });
 await server.start();
 
+app.use(compression());
 app.use(graphqlUploadExpress());
 
 app.use(
@@ -221,8 +223,14 @@ app.use(
           createProcessedDatasetByObjectNameLoader(),
         datasetByObjectNameLoader: createDatasetByObjectNameLoader(),
       };
-
-      return { req, auth, jwt: auth, loaders, workflowChannel, workflowStatusChannel };
+      return {
+        req,
+        auth,
+        jwt: auth,
+        loaders,
+        workflowChannel,
+        workflowStatusChannel,
+      };
     },
   }),
 );

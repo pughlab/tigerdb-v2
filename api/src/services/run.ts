@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { AppAuth } from "../index.ts";
 import { runQuery } from "../neo4j.ts";
-import { uploadFileToMinio } from "./minio.ts";
+import { uploadFile } from "./storage.ts";
 
 const defaultParameters = {
   outPrefix: "TIGERdb",
@@ -123,6 +123,33 @@ export async function createRun(params: {
     allAAInterchangeable: parameters.allAAInterchangeable,
   });
   return mapRunNode(records[0].get("r"));
+}
+
+export async function deleteRun(runId: string, authenticated: boolean) {
+  const query = authenticated
+    ? `
+      MATCH (r:Run { runID: $runId })
+      OPTIONAL MATCH (r)-[:HAS_RESULT]-(t:GliphTCR)
+      WHERE apoc.node.degree(t) = 1
+      WITH r, collect(t) AS tcrs
+      DETACH DELETE r
+      FOREACH (t IN tcrs | DETACH DELETE t)
+      RETURN count(r) as deletedRuns
+    `
+    : `
+      MATCH (u:KeycloakUser)<-[]-(x:Run)
+      WHERE
+        u.email = "public@tigerdb.ca"
+        AND x.runID = $runId
+      OPTIONAL MATCH (x)-[:HAS_RESULT]->(t:GliphTCR)
+      WHERE apoc.node.degree(t) = 1
+      WITH x, collect(t) AS tcrs
+      DETACH DELETE x
+      FOREACH (t IN tcrs | DETACH DELETE t)
+      RETURN count(x) AS deletedRuns
+    `;
+  const records = await runQuery(query, { runId });
+  return records.length > 0 && records[0].get('deletedRuns').toNumber() > 0;
 }
 
 export async function findRunWithCreator(runId: string, userId: string) {
@@ -347,6 +374,6 @@ export async function updateRunStatus(payload: {
     throw new Error("Run not found");
   }
   const bucketName = `run-${runId}`;
-  await uploadFileToMinio(bucketName, "final.log", Buffer.from(logs));
+  await uploadFile(bucketName, "final.log", Buffer.from(logs));
   return mapRunNode(records[0].get("r"));
 }

@@ -1,6 +1,6 @@
-FROM node:22-alpine AS node
+FROM node:26-alpine AS node
 
-RUN corepack enable
+RUN npm install -g corepack@latest && corepack enable
 
 FROM eclipse-temurin:25-jdk-alpine
 

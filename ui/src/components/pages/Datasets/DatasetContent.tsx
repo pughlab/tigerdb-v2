@@ -13,16 +13,15 @@ import {
 import { useDropzone, type FileWithPath } from "react-dropzone";
 import { gql } from "@apollo/client";
 import { useQuery, useMutation } from "@apollo/client/react";
-import useMinioUploadMutation from "../../../hooks/useMinioUploadMutation";
-import useCreateCuratedAnnotationFromDatasetMutation from "../../../hooks/useCreateCuratedAnnotationFromDatasetMutation";
-import useCreateCuratedDatasetFromDatasetMutation from "../../../hooks/useCreateCuratedDatasetFromDatasetMutation";
-import useIsAdmin from "../../../hooks/useIsAdmin";
-import useIsCurator from "../../../hooks/useIsCurator";
-import DisplayTableFromPresignedURL from "../table/DisplayTableFromPresignedURL";
+import useFileUploadMutation from "../../../hooks/useFileUploadMutation.ts";
+import useCreateCuratedAnnotationFromDatasetMutation from "../../../hooks/useCreateCuratedAnnotationFromDatasetMutation.ts";
+import useCreateCuratedDatasetFromDatasetMutation from "../../../hooks/useCreateCuratedDatasetFromDatasetMutation.ts";
+import useIsAdmin from "../../../hooks/useIsAdmin.ts";
+import useIsCurator from "../../../hooks/useIsCurator.ts";
+import DisplayTableFromPresignedURL from "../../common/table/DisplayTableFromPresignedURL.tsx";
 
-import { type MinioUpload } from "../../../types/types.ts";
-import FileHeaderSelection from "../table";
-import ThemedSegment from "../ThemedSegment.tsx";
+import FileHeaderSelection from "../../common/table";
+import ThemedSegment from "../../common/ThemedSegment.tsx";
 
 // The header options to display in the dropdown for each column
 const headerOptions = [
@@ -38,7 +37,7 @@ const headerOptions = [
   { key: "count", text: "Clone Count", value: "count" },
 ];
 
-function MinioUploadModal({
+function FileUploadModal({
   datasetID,
   refetch,
 }: Readonly<{ datasetID: string; refetch: () => any }>) {
@@ -49,7 +48,7 @@ function MinioUploadModal({
     mutation: uploadMutation,
     loading: uploadLoading,
     error: uploadError,
-  } = useMinioUploadMutation(refetch);
+  } = useFileUploadMutation(refetch);
   const onDrop = useCallback((files: FileWithPath[]) => {
     uploadMutation({
       variables: {
@@ -63,7 +62,7 @@ function MinioUploadModal({
   }, [bucketName, datasetID, uploadMutation]);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
   let uploadSegment: React.JSX.Element
-  if (uploadState.minioUpload) {
+  if (uploadState.fileUpload) {
     uploadSegment = <ThemedSegment basic icon="check" text="Upload completed!"/>;
   } else if (uploadError) {
     uploadSegment = <ThemedSegment basic icon="times" text="Upload failed. Please try again."/>;
@@ -198,7 +197,7 @@ function DeleteButton({ upload, doDelete, disabled }) {
           circular
           icon="trash"
           disabled={disabled}
-          key={"delete." + upload.objectName}
+          key={`delete.${upload.objectName}`}
           onClick={() => {
             doDelete({
               variables: { objectName: upload.objectName },
@@ -228,7 +227,7 @@ function CurateAnnotationsButton({
           circular
           color="facebook"
           floated="right"
-          key={"curate." + upload?.objectName}
+          key={`curate.${upload?.objectName}`}
           onClick={() => {
             curateAnnotation({
               variables: {
@@ -311,7 +310,7 @@ function TableModal({ upload, refetch, isPublic }) {
           color={processedDataset ? "green" : "blue"}
           disabled={isPublic || Boolean(processedDataset)}
           icon={processedDataset ? "check" : "table"}
-          key={"info." + objectName}
+          key={`info.${objectName}`}
           onClick={() => setOpen(!open)}
         />
       }
@@ -345,7 +344,7 @@ function TableModal({ upload, refetch, isPublic }) {
   );
 }
 
-export default function MinioBucket({
+export default function DatasetContent({
   datasetID,
   isReference,
   isPublic,
@@ -363,8 +362,8 @@ export default function MinioBucket({
   const bucketName = `dataset-${datasetID}`;
   const { data, refetch } = useQuery(
     gql`
-      query MinioUploads($bucketName: ID!) {
-        minioUploads(where: { bucketName: { eq: $bucketName } }) {
+      query FileUploads($bucketName: ID!) {
+        fileUploads(where: { bucketName: { eq: $bucketName } }) {
           bucketName
           objectName
           filename
@@ -383,14 +382,13 @@ export default function MinioBucket({
     { variables: { bucketName }, fetchPolicy: "network-only" },
   );
 
-  const [minioDelete] = useMutation(
+  const [deleteFile] = useMutation(
     gql`
-      mutation minioDelete($bucketName: String!, $objectName: String!) {
-        minioDelete(bucketName: $bucketName, objectName: $objectName)
+      mutation DeleteFile($input: DeleteFileInput!) {
+        deleteFile(input: $input)
       }
     `,
     {
-      variables: { bucketName, objectName: null },
       fetchPolicy: "network-only",
       onCompleted: () => {
         refetch();
@@ -412,10 +410,10 @@ export default function MinioBucket({
   const { isAdmin } = useIsAdmin();
   const { isCurator } = useIsCurator();
 
-  if (!data?.minioUploads) {
+  if (!data?.fileUploads) {
     return null;
   }
-  const { minioUploads } = data as { minioUploads?: MinioUpload[] };
+  const { fileUploads } = data;
   const canCurate: boolean = (isAdmin || isCurator) && !curated;
   const canAnnotate: boolean = (isAdmin || isCurator) && !annotated;
 
@@ -424,35 +422,41 @@ export default function MinioBucket({
       <Divider horizontal content="Uploads" />
       {isOwner || isCurator || isAdmin ? (
         <>
-          <MinioUploadModal datasetID={datasetID} refetch={refetch} />
+          <FileUploadModal datasetID={datasetID} refetch={refetch} />
           <Divider />
         </>
       ) : null}
-      {minioUploads.length === 0 ? (
+      {fileUploads.length === 0 ? (
         <ThemedSegment text={"No uploads yet"} />
       ) : (
         <List celled divided>
-          {minioUploads.map((minioUpload) => {
+          {fileUploads.map((fileUpload) => {
+            const { bucketName, objectName } = fileUpload;
             return (
-              <div key={"div." + minioUpload.objectName}>
-                <List.Item key={"list." + minioUpload.objectName}>
-                  <DownloadButton upload={minioUpload} />
+              <div key={`div.${objectName}`}>
+                <List.Item key={`list.${objectName}`}>
+                  <DownloadButton upload={fileUpload} />
                   {(isOwner || isCurator || isAdmin) && (
                     <DeleteButton
-                      upload={minioUpload}
-                      doDelete={minioDelete}
+                      upload={fileUpload}
+                      doDelete={() =>
+                        deleteFile({
+                          variables: { input: { bucketName, objectName } },
+                        })
+                      }
                       disabled={false}
                     />
                   )}{" "}
                   {canAnnotate && (
                     <CurateAnnotationsButton
-                      upload={minioUpload}
+                      upload={fileUpload}
                       datasetID={datasetID}
                       loading={curatedAnnotationLoading}
                       disabled={
                         annotationSuccess ||
                         curatedAnnotationLoading ||
-                        !minioUpload
+                        isPublic ||
+                        !fileUpload
                       }
                       success={annotationSuccess}
                       curateAnnotation={createCuratedAnnotationFromDataset}
@@ -460,14 +464,14 @@ export default function MinioBucket({
                   )}
                   {canCurate && (
                     <CurateDatasetButton
-                      processedDataset={minioUpload.processedDataset}
+                      processedDataset={fileUpload.processedDataset}
                       datasetID={datasetID}
                       loading={curatedDatasetLoading}
                       disabled={
                         success ||
                         curatedDatasetLoading ||
                         isPublic ||
-                        !minioUpload
+                        !fileUpload
                       }
                       success={success}
                       curate={createCuratedDatasetFromDataset}
@@ -475,7 +479,7 @@ export default function MinioBucket({
                   )}
                   {!isReference && (
                     <TableModal
-                      upload={minioUpload}
+                      upload={fileUpload}
                       refetch={refetch}
                       isPublic={isPublic}
                     />

@@ -4,31 +4,31 @@ import { useReducer } from "react";
 
 interface UploadState {
   file?: any;
-  minioUpload?: any; // should use type
+  fileUpload?: any; // should use type
   isLoading: boolean;
   error?: string;
 }
 
 type UploadAction =
   | { type: "SET_FILE"; file: any }
-  | { type: "SET_MINIO_UPLOAD"; minioUpload: any };
+  | { type: "SET_FILE_UPLOAD"; fileUpload: any };
 
 const reducer = (state: UploadState, action: UploadAction): UploadState => {
   switch (action.type) {
     case "SET_FILE":
       return { ...state, file: action.file };
-    case "SET_MINIO_UPLOAD":
-      return { ...state, minioUpload: action.minioUpload };
+    case "SET_FILE_UPLOAD":
+      return { ...state, fileUpload: action.fileUpload };
   }
 };
 const initialState = {
   file: undefined,
-  minioUpload: undefined,
+  fileUpload: undefined,
   isLoading: false,
   error: undefined,
 };
 
-export default function useMinioUploadMutation(postFn: any) {
+export default function useFileUploadMutation(postFn: any) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [uploadFile, { loading, error }] = useMutation(
     gql`
@@ -44,8 +44,8 @@ export default function useMinioUploadMutation(postFn: any) {
       onCompleted: (data) => {
         if (data) {
           dispatch({
-            type: "SET_MINIO_UPLOAD",
-            minioUpload: data?.uploadFile,
+            type: "SET_FILE_UPLOAD",
+            fileUpload: data?.uploadFile,
           });
         }
         postFn();

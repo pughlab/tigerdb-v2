@@ -1,8 +1,8 @@
-FROM node:22-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 
-RUN corepack enable pnpm
+RUN npm install -g corepack@latest && corepack enable && corepack enable pnpm
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml ./
 

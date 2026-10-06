@@ -3,9 +3,9 @@ Worker:
 
 GenericS3:
   - Disabled: false
-    Endpoint: "http://tigerdb-minio:9000"
-    Key: "minioadmin"
-    Secret: "minioadmin"
+    Endpoint: "http://versitygw:7070"
+    Key: "versitygw"
+    Secret: "versitygw"
 
 LocalStorage:
   AllowedDirs:

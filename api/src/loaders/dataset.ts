@@ -44,7 +44,7 @@ async function datasetsByTagName(tagNames: readonly string[]) {
 async function datasetByObjectName(objectNames: readonly string[]) {
   const query: string = `
     UNWIND $objectNames AS objectName
-    OPTIONAL MATCH (u:MinioUpload { objectName: objectName })<-[:HAS_FILE]-(d:Dataset)
+    OPTIONAL MATCH (u:Upload { objectName: objectName })<-[:HAS_FILE]-(d:Dataset)
     RETURN objectName, d AS dataset
   `;
   const records = await runQuery(query, { objectNames });

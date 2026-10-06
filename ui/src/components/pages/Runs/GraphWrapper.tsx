@@ -75,7 +75,6 @@ export default function GraphWrapper({
                 variables: {
                   input: {
                     runId: runID,
-                    presignedURL,
                   },
                 },
               })

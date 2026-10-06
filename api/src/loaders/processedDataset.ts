@@ -27,7 +27,7 @@ async function processedDatasetByUploadObjectName(
 ): Promise<any> {
   const query: string = `
     UNWIND $objectNames AS objectName
-    OPTIONAL MATCH (m:MinioUpload { objectName: objectName })-[:HAS_PROCESSED_FILE]->(p:ProcessedDataset)
+    OPTIONAL MATCH (:Upload { objectName: objectName })-[:HAS_PROCESSED_FILE]->(p:ProcessedDataset)
     RETURN objectName, p AS dataset
   `;
   const records = await runQuery(query, { objectNames });

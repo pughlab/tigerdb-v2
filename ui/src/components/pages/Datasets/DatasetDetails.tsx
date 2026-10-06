@@ -2,7 +2,7 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { Header, Label, Message, Divider, Grid } from "semantic-ui-react";
 import { useParams } from "react-router";
-import MinioBucket from "../../common/minio";
+import DatasetContent from "./DatasetContent.tsx";
 
 export default function DatasetDetails() {
   const { datasetID } = useParams();
@@ -47,7 +47,7 @@ export default function DatasetDetails() {
       <Grid.Row divided>
         <Grid.Column width={10}>
           <Divider horizontal content="Dataset Files" />
-          <MinioBucket datasetID={`${datasetID}`} />
+          <DatasetContent datasetID={`${datasetID}`} />
         </Grid.Column>
       </Grid.Row>
     </Grid>

@@ -22,7 +22,7 @@ export function RunsListItem({ run, refetch }) {
 
   processedDatasets?.forEach((processedUpload) => {
     const uniqueTags =
-      processedUpload.minioUpload?.dataset?.tags?.filter((tag) => {
+      processedUpload.upload?.dataset?.tags?.filter((tag) => {
         if (seenTagnames.has(tag.name)) {
           return false;
         }

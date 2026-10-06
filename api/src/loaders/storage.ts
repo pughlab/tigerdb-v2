@@ -4,7 +4,7 @@ import { runQuery } from "../neo4j.ts";
 async function uploadBatch(datasetIds: readonly string[]) {
   const query: string = `
     UNWIND $datasetIds AS datasetId
-    OPTIONAL MATCH (d:Dataset { datasetID: datasetId })-[:HAS_FILE]->(u:MinioUpload)
+    OPTIONAL MATCH (d:Dataset { datasetID: datasetId })-[:HAS_FILE]->(u:Upload)
     RETURN datasetId, collect(u) AS uploads
   `;
   const records = await runQuery(query, { datasetIds });
@@ -24,7 +24,7 @@ async function uploadBatch(datasetIds: readonly string[]) {
 async function uploadByObjectName(objectNames: readonly string[]) {
   const query: string = `
     UNWIND $objectNames AS objectName
-    OPTIONAL MATCH (p:ProcessedDataset { objectName: objectName })<-[:HAS_PROCESSED_FILE]-(u:MinioUpload)
+    OPTIONAL MATCH (p:ProcessedDataset { objectName: objectName })<-[:HAS_PROCESSED_FILE]-(u:Upload)
     RETURN objectName, u AS upload
   `;
   const records = await runQuery(query, { objectNames });

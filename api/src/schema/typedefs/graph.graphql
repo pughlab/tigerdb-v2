@@ -71,7 +71,7 @@ input GraphOptions {
 
 input GraphInput {
   runId: ID!
-  presignedURL: String!
+  presignedURL: String @deprecated
 }
 
 extend type Query {

@@ -1,5 +1,4 @@
-# Type used for keeping track of what MinioObjects exist
-type MinioUpload @node {
+type FileUpload @node(labels: ["Upload"]) {
   bucketName: ID!
   objectName: ID! @id
   filename: String!
@@ -8,7 +7,7 @@ type MinioUpload @node {
   processedDataset: ProcessedDataset @relationship(type: "HAS_PROCESSED_FILE", direction: OUT)
 }
 
-input MinioUploadInput {
+input FileUploadInput {
   bucketName: ID!
   objectName: ID!
   filename: String!
@@ -53,12 +52,12 @@ type ProcessedDataset @node {
   rows: Int!
   createdAt: DateTime!
   presignedURL: String @customResolver
-  upload: MinioUpload @relationship(type: "HAS_PROCESSED_FILE", direction: IN)
+  upload: FileUpload @relationship(type: "HAS_PROCESSED_FILE", direction: IN)
   delimiter: String!
 }
 
 extend type Mutation {
-  uploadFile(input: UploadFileInput!): MinioUpload!
+  uploadFile(input: UploadFileInput!): FileUpload!
   deleteFile(input: DeleteFileInput!): Boolean
-  uploadProcessedHeaders(input: ProcessedHeaderInput!): MinioUpload
+  uploadProcessedHeaders(input: ProcessedHeaderInput!): FileUpload
 }

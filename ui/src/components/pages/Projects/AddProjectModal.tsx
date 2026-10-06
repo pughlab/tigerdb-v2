@@ -28,22 +28,14 @@ export default function AddProjectModal({ refetch }) {
 
   const [createProject, { loading }] = useMutation(
     gql`
-      mutation CreateProject(
-        $name: String!
-        $description: String!
-        $isReference: Boolean
-      ) {
-        createProject(
-          name: $name
-          description: $description
-          isReference: $isReference
-        ) {
-          projectID
+      mutation CreateProject($input: CreateProjectInput!) {
+        createProject(input: $input) {
+          id
           name
           description
           createdOn
-          isPublic
-          isReference
+          public
+          reference
         }
       }
     `,
@@ -53,7 +45,7 @@ export default function AddProjectModal({ refetch }) {
         setOpen(!open);
         setDescription("");
         setName("");
-        const projectID = data.createProject.projectID;
+        const projectID = data.createProject.id;
         navigate(`/home/data/${projectID}`);
       },
     },
@@ -158,7 +150,7 @@ export default function AddProjectModal({ refetch }) {
           loading={loading}
           onClick={async () => {
             await createProject({
-              variables: { name, description, isReference },
+              variables: { input: { name, description, reference: isReference } },
             });
           }}
         />

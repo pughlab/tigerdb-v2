@@ -23,11 +23,11 @@ import { tagColors } from "../Datasets/DatasetTag";
 import { RunsListItem } from "./RunsListItem.tsx";
 
 function uploadIncludesTag(upload, tagList) {
-  return tagList?.every((tagName) => upload.minioUpload?.dataset?.tags?.some((tag) => tag.name === tagName)) ?? false
+  return tagList?.every((tagName) => upload.upload?.dataset?.tags?.some((tag) => tag.name === tagName)) ?? false
 }
 
 function uploadIncludesCategory(upload, categoryList) {
-  return categoryList?.every((categoryName) => upload.minioUpload?.dataset?.tags?.some((tag) => tag.category === categoryName)) ?? false
+  return categoryList?.every((categoryName) => upload.upload?.dataset?.tags?.some((tag) => tag.category === categoryName)) ?? false
 }
 
 export default function RunsList() {

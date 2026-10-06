@@ -1,17 +1,18 @@
 node_modules
 ui/dist
 api/build
-nextflow-worker/build
+worker/build
 
 **/.env
 api/.env
 ui/.env
-nextflow-worker/.env
+worker/.env
 
 .pnpm-store
 
 /neo4j
 /minio/
+/versitygw
 
 .vscode
 .idea

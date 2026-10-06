@@ -1,19 +1,12 @@
-import { randomUUID } from "node:crypto";
-import { GraphQLError } from "graphql";
 import { AppContext } from "../../index.ts";
 import { assertAuthenticated } from "../../utils/auth.ts";
-import { assertHasExtension, splitFilename } from "../../utils/file.ts";
+import { randomUUID } from "node:crypto";
 import {
   connectUploadToProcessedDataset,
-  createFileStream,
-  createMinioUploadNode,
-  deleteFileFromMinio,
-  getFileRows,
-  makePresignedURL,
-  processRows,
-  putObjectInBucket,
-  uploadFileToMinio,
-} from "../../services/minio.ts";
+  createFileStream, createUploadNode, deleteFile, getFileRows, makePresignedURL, processRows,
+  putObjectInBucket, uploadFile } from "../../services/storage.ts";
+import { GraphQLError } from "graphql";
+import { assertHasExtension, splitFilename } from "../../utils/file.ts";
 import { createProcessedDatasetNode } from "../../services/processedDataset.ts";
 import { createHeaderNodes } from "../../services/header.ts";
 
@@ -38,8 +31,8 @@ export default {
 
       try {
         const objectName = `${randomUUID()}_${filename}`;
-        await uploadFileToMinio(args.input.bucketName, objectName, stream);
-        return await createMinioUploadNode({
+        await uploadFile(args.input.bucketName, objectName, stream);
+        return await createUploadNode({
           bucketName: args.input.bucketName,
           objectName,
           filename,
@@ -65,7 +58,7 @@ export default {
       const { bucketName, objectName } = args.input;
       assertAuthenticated(context);
 
-      return await deleteFileFromMinio(bucketName, objectName);
+      return await deleteFile(bucketName, objectName);
     },
     uploadProcessedHeaders: async (
       _parent: unknown,
@@ -113,7 +106,7 @@ export default {
       );
     },
   },
-  MinioUpload: {
+  FileUpload: {
     presignedURL: (upload: any) => {
       const { bucketName, objectName } = upload;
       return makePresignedURL(bucketName, objectName);
@@ -128,7 +121,9 @@ export default {
       );
     },
     dataset: async (upload: any, _args: unknown, context: AppContext) => {
-      return await context.loaders.datasetByObjectNameLoader.load(upload.objectName);
+      return await context.loaders.datasetByObjectNameLoader.load(
+        upload.objectName,
+      );
     },
   },
   ProcessedDataset: {
@@ -136,12 +131,10 @@ export default {
       const { bucketName, objectName } = dataset;
       return makePresignedURL(bucketName, objectName);
     },
-    upload: async (
-      dataset: any,
-      _args: unknown,
-      context: AppContext,
-    ) => {
-      return await context.loaders.uploadByObjectNameLoader.load(dataset.objectName);
+    upload: async (dataset: any, _args: unknown, context: AppContext) => {
+      return await context.loaders.uploadByObjectNameLoader.load(
+        dataset.objectName,
+      );
     },
   },
 };
