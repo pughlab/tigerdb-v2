@@ -3,9 +3,10 @@
   "compilerOptions": {
     "outDir": "./build",
     "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "rewriteRelativeImportExtensions": true,
+    "noEmit": false,
     "rootDir": "./src",
-    "types": ["node"],
+    "types": ["node"]
   },
   "include": ["src/**/*"]
 }
