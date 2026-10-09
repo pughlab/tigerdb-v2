@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --inspect=0.0.0.0:9229 src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node build/index.js"
   },
   "packageManager": "pnpm@10.33.0",
   "dependencies": {

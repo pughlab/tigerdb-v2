@@ -16,7 +16,7 @@ const authLink = new SetContextLink(({ headers }) => {
 })
 
 const link = new UploadHttpLink({
-  uri:`https://${GRAPHQL_IP}:4001/graphql`,
+  uri:`https://${GRAPHQL_IP}/graphql`,
   headers: {
     'apollo-require-preflight': "true",
   }

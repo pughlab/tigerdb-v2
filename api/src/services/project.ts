@@ -33,7 +33,7 @@ export async function createProject(params: { input: { name: string; description
         ON CREATE SET
             p.name = $name,
             p.description = $description,
-            p.reference = $reference,
+            p.isReference = $reference,
             p.isPublic = false,
             p.createdOn = datetime()
         MERGE (p)-[:CREATED_BY]->(u)
@@ -62,7 +62,7 @@ export async function updateProject(params: { input: { id: string; name?: string
         SET 
             p.name = coalesce($name, p.name),
             p.description = coalesce($description, p.description),
-            p.reference = coalesce($reference, p.reference)
+            p.isReference = coalesce($reference, p.isReference)
         RETURN p
     `
     const records = await runQuery(query, {

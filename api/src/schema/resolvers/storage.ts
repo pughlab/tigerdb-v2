@@ -136,5 +136,10 @@ export default {
         dataset.objectName,
       );
     },
+    headers: async (dataset: any, _args: unknown, context: AppContext) => {
+      return await context.loaders.headersByObjectNameLoader.load(
+        dataset.objectName,
+      );
+    }
   },
 };
