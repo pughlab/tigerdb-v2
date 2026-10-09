@@ -3,7 +3,7 @@ Worker:
 
 GenericS3:
   - Disabled: false
-    Endpoint: "http://versitygw:7070"
+    Endpoint: "http://s3:7070"
     Key: "versitygw"
     Secret: "versitygw"
 
