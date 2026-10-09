@@ -1,6 +1,7 @@
 import {
+  createIndices,
   createTCREdges,
-  createTCRNodes,
+  createTCRNodes, enrichTCRNodes,
   getGraph,
   getNodeDetails,
   projectGraph,
@@ -58,7 +59,9 @@ export default {
     ) => {
       const { runId } = args.input;
       try {
+        await createIndices();
         await createTCRNodes(runId);
+        await enrichTCRNodes(runId);
         await createTCREdges(runId);
         await removeTemporaryClusters(runId);
         return true;

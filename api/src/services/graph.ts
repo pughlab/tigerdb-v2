@@ -220,6 +220,22 @@ async function getNodes(
         n.hla_drb3 AS hla_drb3,
         n.hla_drb4 AS hla_drb4,
         n.hla_drb5 AS hla_drb5,
+        n.projectID AS projectID,
+        n.projectName AS projectName,
+        n.datasetID AS datasetID,
+        n.datasetName AS datasetName,
+        n.variableID AS variableID,
+        n.trav AS trav,
+        n.traj AS traj,
+        n.mhc AS mhc,
+        n.mhcClass AS mhcClass,
+        n.epitopeGene AS epitopeGene,
+        n.epitopeAAseq AS epitopeAAseq,
+        n.epitopeSpecies AS epitopeSpecies,
+        n.mutation AS mutation,
+        n.recognizesWTEpitope AS recognizesWTEpitope,
+        n.uniProt AS uniProt,
+        n.reference AS reference,
         communityId AS group,
         member.kcore AS kcore
       ${maxNodes === 0 ? "" : "LIMIT $maxNodes"}
@@ -305,6 +321,18 @@ export async function tearDown(graphName: string) {
   await runQuery(query);
 }
 
+export async function createIndices() {
+  await runQuery(
+    `CREATE CONSTRAINT IF NOT EXISTS FOR (t:GliphTCR) REQUIRE t.id IS UNIQUE`,
+  );
+  await runQuery(
+    `CREATE CONSTRAINT IF NOT EXISTS FOR (c:TempCluster) REQUIRE c.id IS UNIQUE`,
+  );
+  await runQuery(
+    `CREATE INDEX annotationvariable_cdr3b IF NOT EXISTS FOR (v:AnnotationVariable) ON (v.cdr3b)`,
+  );
+}
+
 export async function createTCRNodes(runId: string) {
   const bucketName: string = `run-${runId}`;
   const bucketObjects = await listBucketObjects(bucketName);
@@ -381,6 +409,43 @@ export async function createTCRNodes(runId: string) {
   });
 }
 
+export async function enrichTCRNodes(runId: string) {
+  const query: string = `
+    CALL apoc.periodic.iterate(
+      "MATCH (:Run {runID: $runID})-[:HAS_RESULT]->(t:GliphTCR)
+        WHERE t.cdr3b IS NOT NULL
+        RETURN t.cdr3b AS cdr3b, collect(t) AS tcrs",
+    
+      "CALL {
+        WITH cdr3b
+        MATCH (v:AnnotationVariable {cdr3b: cdr3b})
+        WITH v LIMIT 1
+        MATCH (v)<-[:HAS_ANNOTATION_VARIABLE]-(:CuratedAnnotation)<-[:HAS_CURATED_ANNOTATION]-(d:Dataset)<-[:HAS_DATASET]-(p:Project)
+        RETURN p, d, v
+      }
+      UNWIND tcrs AS t
+      SET t.projectID = p.projectID,
+        t.projectName = p.name,
+        t.datasetID = d.datasetID,
+        t.datasetName = d.name,
+        t.variableID = v.annotationVariableID,
+        t.trav = v.trav,
+        t.traj = v.traj,
+        t.mhc = v.mhc,
+        t.mhcClass = v.mhcClass,
+        t.epitopeGene = v.epitopeGene,
+        t.epitopeAAseq = v.epitopeAAseq,
+        t.epitopeSpecies = v.epitopeSpecies,
+        t.mutation = v.mutation,
+        t.recognizesWTEpitope = v.recognizesWTEpitope,
+        t.uniProt = v.uniProt,
+        t.reference = v.reference",
+      { batchSize: 2000, parallel: false, params: { runID: $runId } }
+    )
+  `;
+  await runQuery(query, { runId });
+}
+
 export async function createTCREdges(runId: string) {
   const query: string = `
     CALL apoc.periodic.iterate(
@@ -405,7 +470,7 @@ export async function createTCREdges(runId: string) {
         END
       ",
       {
-        batchSize: 100,
+        batchSize: 1000,
         parallel: false,
         params: { runId: $runId }
       }
