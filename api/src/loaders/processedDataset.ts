@@ -41,6 +41,25 @@ async function processedDatasetByUploadObjectName(
   return objectNames.map((name: string) => datasetMap.get(name) || null);
 }
 
+async function headersByObjectNameLoader(objectNames: readonly string[]): Promise<any> {
+  const query: string = `
+    UNWIND $objectNames AS objectName
+    OPTIONAL MATCH (:Upload { objectName: objectName })-[:HAS_PROCESSED_FILE]->(p:ProcessedDataset)-[:HAS_HEADER]->(h:Header)
+    RETURN objectName, collect(h) AS headers
+  `;
+  const records = await runQuery(query, { objectNames });
+  const headersMap = new Map<string, any>();
+  records.forEach((record) => {
+    const name = record.get("objectName");
+    const headersNodes = record.get("headers");
+    const headers = headersNodes.map((node: any) => ({ ...node.properties }));
+    headersMap.set(name, headers);
+  });
+  return objectNames.map((name: string) => headersMap.get(name) || []);
+}
+
 export const createProcessedDatasetLoader = () => new DataLoader(processedDatasetBatch);
 export const createProcessedDatasetByObjectNameLoader = () =>
   new DataLoader(processedDatasetByUploadObjectName);
+export const createHeadersByObjectNameLoader = () =>
+  new DataLoader(headersByObjectNameLoader);

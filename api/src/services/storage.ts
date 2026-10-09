@@ -26,11 +26,13 @@ async function checkIfBucketExists(bucketName: string): Promise<boolean> {
     await s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
     return true;
   } catch (error) {
-    if (error.name === "NotFound") {
-      return false;
-    }
-    if (error.name === "Forbidden") {
-      return true;
+    if (error instanceof Error) {
+      if (error.name === "NotFound") {
+        return false;
+      }
+      if (error.name === "Forbidden") {
+        return true;
+      }
     }
     throw error;
   }
@@ -41,7 +43,7 @@ async function emptyBucket(bucketName: string) {
     const paginator = paginateListObjectsV2({ client: s3Client }, { Bucket: bucketName });
     const objectKeys = [];
     for await (const { Contents } of paginator) {
-      objectKeys.push(...Contents.map(obj => ({ Key: obj.Key})))
+      objectKeys.push(...(Contents?.map((obj) => ({ Key: obj.Key })) ?? []));
     }
     await s3Client.send(
       new DeleteObjectsCommand({
@@ -52,7 +54,10 @@ async function emptyBucket(bucketName: string) {
       })
     );
   } catch (error) {
-    console.error(`Failed to empty bucket ${bucketName}. ${error.name}: ${error.message}`)
+    const err = error as Error;
+    console.error(
+      `Failed to empty bucket ${bucketName}. ${err.name}: ${err.message}`,
+    );
   }
 }
 

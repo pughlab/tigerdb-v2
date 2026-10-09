@@ -1,6 +1,5 @@
-import fs from "node:fs";
 import path from "node:path";
-import https from "node:https";
+import http from "node:http";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
@@ -25,7 +24,11 @@ import {
 } from "./loaders/dataset.ts";
 import { createSharedWithLoader } from "./loaders/keycloak.ts";
 import { createTagLoader } from "./loaders/tag.ts";
-import { createProcessedDatasetByObjectNameLoader, createProcessedDatasetLoader } from "./loaders/processedDataset.ts";
+import {
+  createProcessedDatasetByObjectNameLoader,
+  createProcessedDatasetLoader,
+  createHeadersByObjectNameLoader,
+} from "./loaders/processedDataset.ts";
 import {
   createUploadLoader,
   createUploadByObjectNameLoader,
@@ -56,6 +59,7 @@ export type AppContext = {
     uploadByObjectNameLoader: DataLoader<string, any>;
     processedDatasetObjectNameLoader: DataLoader<string, any>;
     datasetByObjectNameLoader: DataLoader<string, any>;
+    headersByObjectNameLoader: DataLoader<string, any>;
   };
   workflowChannel: ChannelWrapper;
   workflowStatusChannel: ChannelWrapper;
@@ -130,10 +134,10 @@ const typesArray = await loadFiles(
   },
 );
 const resolversArray = await loadFiles(
-  path.join(BASE_PATH, "schema/resolvers/**/*.ts"),
+  path.join(BASE_PATH, "schema/resolvers/**/*.{ts,js}"),
   {
     ignoreIndex: true,
-    extensions: ["ts"],
+    extensions: ["ts","js"],
   },
 );
 const mergedTypeDefs = mergeTypeDefs([...scalarTypeDefs, typesArray]);
@@ -173,14 +177,10 @@ const neoSchema = new Neo4jGraphQL({
 const schema = await neoSchema.getSchema();
 
 const app = express();
-const sslOptions = {
-  key: fs.readFileSync(path.join(BASE_PATH, "..", "certificates", "key.pem")),
-  cert: fs.readFileSync(path.join(BASE_PATH, "..", "certificates", "cert.pem")),
-};
-const httpsServer = https.createServer(sslOptions, app);
+const httpServer = http.createServer(app);
 const server = new ApolloServer<AppContext>({
   schema,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer: httpsServer })],
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 await server.start();
 
@@ -222,6 +222,7 @@ app.use(
         processedDatasetObjectNameLoader:
           createProcessedDatasetByObjectNameLoader(),
         datasetByObjectNameLoader: createDatasetByObjectNameLoader(),
+        headersByObjectNameLoader: createHeadersByObjectNameLoader(),
       };
       return {
         req,
@@ -236,7 +237,7 @@ app.use(
 );
 
 await new Promise((resolve) => {
-  httpsServer.listen(
+  httpServer.listen(
     { port: Number.parseInt(process.env.PORT || "4001") },
     () => resolve(true),
   );
