@@ -1,3 +1,4 @@
+import { createReadStream } from "node:fs";
 import {
   _Object,
   CreateBucketCommand,
@@ -307,4 +308,58 @@ export async function getFinalLogs(bucketName: string, objectName: string = "fin
       Key: objectName,
     }),
   );
+}
+
+export async function setUpScriptsBucket() {
+  const bucketName: string = 'scripts';
+  const exists = await checkIfBucketExists(bucketName);
+  if (!exists) {
+    const filesToUpload = [
+      {
+        localPath: "/scripts/TIGERdb_inputPrep.R",
+        remotePath: "TIGERdb_inputPrep.R",
+      },
+      {
+        localPath:
+          "/scripts/references/MarkDavis_TumorEnrichedTRB-CDR3-dec18.tsv",
+        remotePath: "references/MarkDavis_TumorEnrichedTRB-CDR3-dec18.tsv",
+      },
+      {
+        localPath:
+          "/scripts/references/TIGERdb_MinimalScoreConfidence3_VersionII.tsv",
+        remotePath: "references/TIGERdb_MinimalScoreConfidence3_VersionII.tsv",
+      },
+      {
+        localPath:
+          "/scripts/references/VDJdb_MinimalScoreConfidence3_VersionII-dec14.tsv",
+        remotePath:
+          "references/VDJdb_MinimalScoreConfidence3_VersionII-dec14.tsv",
+      },
+      {
+        localPath: "/scripts/references/human_v2.0/ref_CD48_v2.0.fa",
+        remotePath: "references/human_v2.0/ref_CD48_v2.0.fa",
+      },
+      {
+        localPath: "/scripts/references/human_v2.0/ref_CD48_v2.0.txt",
+        remotePath: "references/human_v2.0/ref_CD48_v2.0.txt",
+      },
+      {
+        localPath: "/scripts/references/human_v2.0/ref_L_CD48_v2.0.txt",
+        remotePath: "references/human_v2.0/ref_L_CD48_v2.0.txt",
+      },
+      {
+        localPath: "/scripts/references/human_v2.0/ref_V_CD48_v2.0.txt",
+        remotePath: "references/human_v2.0/ref_V_CD48_v2.0.txt",
+      },
+    ];
+    await s3Client.send(new CreateBucketCommand({ Bucket: bucketName }));
+    for (const fileData of filesToUpload) {
+      try {
+        const stream = createReadStream(fileData.localPath);
+        await uploadFile(bucketName, fileData.remotePath, stream);
+      } catch (error) {
+        console.error(`Error uploading file ${fileData.localPath} to ${fileData.remotePath}:`, error as Error);
+      }
+    }
+  }
 }

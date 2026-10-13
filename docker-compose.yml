@@ -55,6 +55,7 @@ services:
     volumes:
       - ./api:/app
       - /app/node_modules
+      - ./scripts:/scripts:ro
   ui:
     build:
       context: ./

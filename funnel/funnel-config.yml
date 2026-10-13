@@ -1,6 +1,9 @@
 Worker:
   WorkDir: "/tmp/funnel-work"
 
+AmazonS3:
+  Disabled: true
+
 GenericS3:
   - Disabled: false
     Endpoint: "http://s3:7070"

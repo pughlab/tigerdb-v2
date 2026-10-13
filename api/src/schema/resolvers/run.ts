@@ -14,7 +14,7 @@ import {
 import {
   createBucketIfNotExists, deleteBucket, getFinalLogs,
   listBucketObjects,
-  makePresignedURL,
+  makePresignedURL, setUpScriptsBucket,
   uploadFile,
 } from "../../services/storage.ts";
 import { assertAuthenticated } from "../../utils/auth.ts";
@@ -135,6 +135,7 @@ export default {
         throw new GraphQLError("Run not found");
       }
 
+      await setUpScriptsBucket();
       const bucketName = `run-${run.id}`;
       const { datasetsTsv, parameterFile, inputPaths } =
         await createRunFiles(run);

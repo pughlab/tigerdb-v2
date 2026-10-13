@@ -8,15 +8,12 @@ params.outPrefix = "gliph_output"
 params.inputPath = ""
 // params.destinationPath = "s3://some-bucket/some-result"
 
+params.script_file = "s3://scripts/TIGERdb_inputPrep.R"
+params.external_spcfc_file = "s3://scripts/references/TIGERdb_MinimalScoreConfidence3_VersionII.tsv"
 
-
-
-params.script_file = "$projectDir/scripts/TIGERdb_inputPrep.R"
-params.external_spcfc_file = "$projectDir/references/TIGERdb_MinimalScoreConfidence3_VersionII.tsv"
-
-params.ref_CD48 = "$projectDir/references/human_v2.0/ref_CD48_v2.0.txt"
-params.ref_V_CD48 = "$projectDir/references/human_v2.0/ref_V_CD48_v2.0.txt"
-params.ref_L_CD48 = "$projectDir/references/human_v2.0/ref_L_CD48_v2.0.txt"
+params.ref_CD48 = "s3://scripts/references/human_v2.0/ref_CD48_v2.0.txt"
+params.ref_V_CD48 = "s3://scripts/references/human_v2.0/ref_V_CD48_v2.0.txt"
+params.ref_L_CD48 = "s3://scripts/references/human_v2.0/ref_L_CD48_v2.0.txt"
 
 process INPUT_PREP {
     publishDir "${params.destinationPath}", mode: 'copy'
