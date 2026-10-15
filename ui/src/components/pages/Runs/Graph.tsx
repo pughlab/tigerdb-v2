@@ -1,6 +1,12 @@
-import { Cosmograph, CosmographProvider } from "@cosmograph/react";
-import type { CosmographConfig, CosmographRef } from "@cosmograph/react";
-import React, {
+import {
+  Cosmograph,
+  type CosmographDataPrepConfig,
+  CosmographProvider,
+  prepareCosmographData,
+  type CosmographConfig,
+  type CosmographRef,
+} from "@cosmograph/react";
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -239,7 +245,7 @@ export default function Graph({
   const visibleNodes = useMemo(() => {
     const initialNodes = nodes.filter(
       (node) =>
-        !hiddenCommunityIds.has(node.group || "") &&
+        !hiddenCommunityIds.has(node.group ?? "") &&
         (communities.get(node.group ?? "")?.length ?? 0) >=
           minimumCommunitySize &&
         !hiddenSourceIds.has(node.source || "") &&
@@ -271,12 +277,12 @@ export default function Graph({
   }, [links, visibleNodes]);
 
   const getNodeColor = useCallback(
-    (node: GraphNode): string => {
+    (node: unknown): string => {
       switch (colorMode) {
         case "source":
-          return node.color || "#ffffff";
+          return (node as GraphNode).color || "#ffffff";
         case "community":
-          return colorScale(String(node.group)) || "#ffffff";
+          return colorScale(String((node as GraphNode).group)) || "#ffffff";
         case "hla": {
           const hlaLabel: string = getHlaLabel(node, hlaLocus);
           return hlaLabel === "Unknown" ? "#ffffff" : colorScale(hlaLabel);
@@ -314,55 +320,68 @@ export default function Graph({
     return colors;
   }, [nodesByHLA, colorScale]);
 
-  const assignPointColor = useCallback(
-    (value: unknown, index?: number) => {
-      const node = typeof index === "number" ? visibleNodes[index] : undefined;
-      if (node) {
-        return getNodeColor(node);
-      }
-      return typeof value === "string" ? value : "#ffffff";
-    },
-    [getNodeColor, visibleNodes],
-  );
+  const nodesById = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
 
-  const config: CosmographConfig = useMemo<CosmographConfig>(
-    () => ({
-      pointIdBy: "id",
-      pointLabelBy: "label",
-      pointColorBy: "color",
-      pointColorByFn: assignPointColor,
-      linkSourceBy: "source",
-      linkTargetBy: "target",
-      enableSimulation: true,
-      pointSphereShading: true,
-      pointDepthFade: 0,
-      pointSizeStrategy: "degree",
-      pointSizeRange: [6, 10],
-      pointSizeScale: 1.5,
-      pointClusterBy: "group",
-      linkOpacity: 0.15,
-      simulationGravity: 0.25,
-      simulationRepulsion: 1.5,
-      simulationLinkSpring: 0.7,
-      simulationLinkDistance: 60,
-      simulationDecay: 5000,
-      cameraFov: 45,
-      enableDrag: true,
-      selectPointOnClick: true,
-      showClusterLabels: true,
-      fitViewOnInit: true,
-      fitViewDelay: 700,
-      transitionDuration: 800,
-      linkColorInterpolateFromEndpoints: true,
-      simulationAlphaOnDrag: 0,
-      pointSamplingDistance: 0,
-      linkSamplingDistance: 0,
-      pointOcclusionCulling: false,
-      linkVisibilityDistanceRange: [0, 100000],
-      preservePointPositionsOnDataUpdate: true,
-    }),
-    [assignPointColor],
-  );
+  const getPointColor = useCallback((id: string) => {
+    const node = nodesById.get(id);
+    return node ? getNodeColor(node) : "#ffffff";
+  }, [nodesById, getNodeColor]);
+
+  const [config, setConfig] = useState<CosmographConfig>({
+    enableSimulation: true,
+    pointSphereShading: true,
+    pointDepthFade: 0,
+    pointSizeStrategy: "degree",
+    pointSizeRange: [6, 10],
+    pointSizeScale: 1.5,
+    linkOpacity: 0.15,
+    simulationGravity: 0.25,
+    simulationRepulsion: 1.5,
+    simulationLinkSpring: 0.7,
+    simulationLinkDistance: 60,
+    simulationDecay: 5000,
+    cameraFov: 45,
+    enableDrag: true,
+    selectPointOnClick: true,
+    showClusterLabels: true,
+    fitViewOnInit: true,
+    fitViewDelay: 700,
+    transitionDuration: 800,
+    linkColorInterpolateFromEndpoints: true,
+    simulationAlphaOnDrag: 0,
+    pointSamplingDistance: 0,
+    linkSamplingDistance: 0,
+    pointOcclusionCulling: false,
+    linkVisibilityDistanceRange: [0, 100000],
+    preservePointPositionsOnDataUpdate: true,
+  });
+
+  useEffect(() => {
+    const dataPrepConfig: CosmographDataPrepConfig = {
+      points: {
+        pointIdBy: "id",
+        pointLabelBy: "label",
+        pointClusterBy: "group",
+      },
+      links: {
+        linkSourceBy: "source",
+        linkTargetsBy: ["target"],
+      },
+    };
+    prepareCosmographData(dataPrepConfig, visibleNodes, visibleLinks).then(
+      (result) => {
+        if (result) {
+          const { points, links: graphLinks, cosmographConfig } = result;
+          setConfig((prevConfig) => ({
+            ...prevConfig,
+            ...cosmographConfig,
+            points,
+            links: graphLinks,
+          }));
+        }
+      },
+    );
+  }, [visibleNodes, visibleLinks]);
 
   useEffect(() => {
     if (filterMode === "community" && searchText.trim() !== "") {
@@ -807,8 +826,6 @@ export default function Graph({
           <Cosmograph
             key={is3D ? "3d-mode" : "2d-mode"}
             ref={cosmograph}
-            points={visibleNodes}
-            links={visibleLinks}
             spaceDimensions={is3D ? 3 : 2}
             pointZBy={is3D ? "z" : undefined}
             onPointClick={
@@ -820,6 +837,8 @@ export default function Graph({
                 : undefined
             }
             {...config}
+            pointColorBy={"id"}
+            pointColorByFn={getPointColor}
           />
         ) : (
           <div
