@@ -26,3 +26,9 @@ export async function checkIfUserExists(params: { email: string }) {
     const records = await runQuery(query, { email });
     return records.length > 0;
 }
+
+export async function createConstraints() {
+  const query: string =
+    "CREATE CONSTRAINT keycloak_user_id_unique IF NOT EXISTS FOR (u:KeycloakUser) REQUIRE u.keycloakUserID IS UNIQUE";
+  await runQuery(query);
+}

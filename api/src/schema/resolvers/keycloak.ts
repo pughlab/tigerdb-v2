@@ -1,5 +1,5 @@
 import {AppContext} from "../../index.ts";
-import {checkIfUserExists, upsertKeycloakUser} from "../../services/keycloak.ts";
+import {checkIfUserExists, createConstraints, upsertKeycloakUser} from "../../services/keycloak.ts";
 import {assertAuthenticated} from "../../utils/auth.ts";
 
 export default {
@@ -26,6 +26,7 @@ export default {
                 email: context.auth.email,
                 name: context.auth.name
             }
+            await createConstraints();
             return upsertKeycloakUser(params)
         }
     }
