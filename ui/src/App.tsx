@@ -3,7 +3,7 @@ import apolloClient from "./apolloClient";
 
 import { store as reduxStore } from "./state/store";
 import { Provider as ReduxProvider } from "react-redux";
-import { KeycloakProvider } from "./keycloak/KeycloakContext";
+import { AuthProvider } from "./auth/AuthContext.tsx";
 
 import { BrowserRouter } from "react-router";
 
@@ -13,7 +13,7 @@ import LoadingAuthentication from "./components/authentication/LoadingAuthentica
 const App = () => {
   return (
     <div>
-      <KeycloakProvider LoadingComponent={<LoadingAuthentication />}>
+      <AuthProvider LoadingComponent={<LoadingAuthentication />}>
         <ReduxProvider {...{ store: reduxStore }}>
           <ApolloProvider {...{ client: apolloClient }}>
             <BrowserRouter>
@@ -21,7 +21,7 @@ const App = () => {
             </BrowserRouter>
           </ApolloProvider>
         </ReduxProvider>
-      </KeycloakProvider>
+      </AuthProvider>
     </div>
   );
 };

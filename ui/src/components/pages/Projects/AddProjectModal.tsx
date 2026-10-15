@@ -13,12 +13,12 @@ import {
   Card,
 } from "semantic-ui-react";
 import useIsCurator from "../../../hooks/useIsCurator";
-import { useKeycloak } from "../../../keycloak/KeycloakContext";
+import { useAuth } from "../../../auth/AuthContext.tsx";
 import { useNavigate } from "react-router";
 
 export default function AddProjectModal({ refetch }) {
   const navigate = useNavigate();
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAuth();
   const isAuthenticated = keycloak?.authenticated;
 
   const [name, setName] = React.useState("");
@@ -46,7 +46,7 @@ export default function AddProjectModal({ refetch }) {
         setDescription("");
         setName("");
         const projectID = data.createProject.id;
-        navigate(`/home/data/${projectID}`);
+        void navigate(`/home/data/${projectID}`);
       },
     },
   );
