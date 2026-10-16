@@ -48,7 +48,7 @@ export async function createCuratedDatasetVariables(
         CALL apoc.periodic.iterate(
             'CALL apoc.load.csv($presignedURL, {sep: $selectedDelimiter}) YIELD list',
             'MATCH (b:CuratedDataset {curatedDatasetID: $curatedDatasetId}) 
-            CREATE (a:DatasetVariable {datasetVariableID: apoc.create.uuid(), ${headers.map((header) => `${header.name.replace(/[^a-zA-Z0-9]/g, "")}: list[${header.index}]`).join(", ")} }), 
+            CREATE (a:DatasetVariable {datasetVariableID: randomUUID(), ${headers.map((header) => `${header.name.replace(/[^a-zA-Z0-9]/g, "")}: list[${header.index}]`).join(", ")} }), 
             (b)-[:HAS_DATASET_VARIABLE]->(a) 
             RETURN a',
             { batchSize: 10000, iterateList: true, parallel: true, params: { curatedDatasetId: $curatedDatasetId, presignedURL: $presignedURL, selectedDelimiter: $selectedDelimiter } }

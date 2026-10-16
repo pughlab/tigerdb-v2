@@ -59,7 +59,7 @@ export async function createAnnotationVariables(curatedAnnotationId: string, buc
         CALL apoc.periodic.iterate(
             'CALL apoc.load.csv($presignedURL, {sep: "\t", header: true}) YIELD list',
             'MATCH (b:CuratedAnnotation {curatedAnnotationID: $curatedAnnotationId}) 
-            CREATE (a:AnnotationVariable {annotationVariableID: apoc.create.uuid(), ${inputFields.map(field => `${field.name}: list[${field.index}]`).join(', ')} }), 
+            CREATE (a:AnnotationVariable {annotationVariableID: randomUUID(), ${inputFields.map(field => `${field.name}: list[${field.index}]`).join(', ')} }), 
             (b)-[:HAS_ANNOTATION_VARIABLE]->(a) 
             RETURN a',
             { batchSize: 10000, iterateList: true, parallel: true, params: { curatedAnnotationId: $curatedAnnotationId, presignedURL: $presignedURL, inputFields: $inputFields } }
