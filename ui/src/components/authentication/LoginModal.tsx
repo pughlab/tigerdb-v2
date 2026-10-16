@@ -11,7 +11,7 @@ import {
   Menu,
 } from "semantic-ui-react";
 
-import { useKeycloak } from "../../keycloak/KeycloakContext";
+import { useAuth } from "../../auth/AuthContext.tsx";
 import { useAppSelector } from "../../state/hooks";
 import { currentAppContextKeycloakMe } from "../../state/appContext";
 import { shallowEqual } from "react-redux";
@@ -23,7 +23,7 @@ import * as R from "remeda";
 
 export default function LoginModal() {
   const [open, setOpen] = useState(false);
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAuth();
   const keycloakMe = useAppSelector(currentAppContextKeycloakMe, shallowEqual);
   if (!keycloakMe) {
     return (

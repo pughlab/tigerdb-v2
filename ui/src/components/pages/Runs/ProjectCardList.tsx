@@ -10,7 +10,7 @@ import {
   Form,
 } from "semantic-ui-react";
 import { tagColors } from "../Datasets/DatasetTag";
-import { useKeycloak } from "../../../keycloak/KeycloakContext";
+import { useAuth } from "../../../auth/AuthContext.tsx";
 import { ProjectCard } from "./ProjectCard.tsx";
 
 function datasetIncludesTag(dataset, tagList) {
@@ -74,7 +74,7 @@ export default function ProjectCardList({
       }
     });
   }
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAuth();
   const isAuthenticated = keycloak?.authenticated;
 
   function toggleCategory(category) {

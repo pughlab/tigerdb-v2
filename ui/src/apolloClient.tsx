@@ -1,12 +1,12 @@
 import { ApolloClient, InMemoryCache } from '@apollo/client'
 import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
 import { SetContextLink } from '@apollo/client/link/context';
+import keycloak from "./auth/keycloak.ts";
 
 const GRAPHQL_IP = globalThis.location.hostname
 
 const authLink = new SetContextLink(({ headers }) => {
-  // get the authentication token from local storage if it exists
-  const token = localStorage.getItem('keycloak_token');
+  const token = keycloak.authenticated ? keycloak.token : undefined;
   return {
     headers: {
       ...headers,

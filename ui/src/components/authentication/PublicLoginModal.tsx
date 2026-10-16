@@ -2,13 +2,13 @@ import { useState } from "react";
 
 import { Header, Segment, Button, Modal, Popup, Menu } from "semantic-ui-react";
 
-import { useKeycloak } from "../../keycloak/KeycloakContext";
+import { useAuth } from "../../auth/AuthContext.tsx";
 import { Logo } from "../logos";
 import { LOGIN_MENU_ELEMENT_ID } from "../intros/PortalNavBarIntro";
 
-export default function LoginModal() {
+export default function PublicLoginModal() {
   const [open, setOpen] = useState(false);
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAuth();
 
   return (
     <>

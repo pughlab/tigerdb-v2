@@ -1,10 +1,10 @@
-import { useKeycloak } from "../../keycloak/KeycloakContext";
+import { useAuth } from "../../auth/AuthContext.tsx";
 import Portal from '../Portal'
 import PublicPortal from '../PublicPortal'
 import CookieConsent from "../CookieConsent";
 
 const RenderOnAuthenticated = () => {
-    const { keycloak } = useKeycloak();
+    const { keycloak } = useAuth();
 
     const isLoggedIn = keycloak.authenticated;
 
