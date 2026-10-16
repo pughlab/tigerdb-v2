@@ -45,7 +45,7 @@ function Layout() {
               </Link>
             </div>
           </Menu.Menu>
-          <Menu.Menu position="right">
+          <Menu.Menu style={{ display: "flex", justifyContent: "center" }}>
             <Link
               to="/public"
               style={{ display: "flex", alignItems: "center", margin: 5 }}
